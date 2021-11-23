@@ -5,7 +5,7 @@ def f(x,y,a):
     x_less_y = torch.sub(x,y)
     x_abs_y = torch.abs(x_less_y)
     a_mul_xy = torch.mul(x_abs_y,a)
-    return torch.min(torch.FloatTensor([a_mul_xy,1]))
+    return torch.min(a_mul_xy,torch.FloatTensor(1))
     # return min(a*abs(x-y),1)
 
 def Err(estim,ref):
@@ -73,11 +73,10 @@ if __name__ == '__main__':
     timeout = 300   # [seconds]
 
     timeout_end = time.time() + timeout
-
+    
     while time.time() < timeout_end:
         for i in range(len(X)):
             yEstim = f(X[i][0], X[i][1], a)
-            yEstim.requires_grad = True
 
             erreur = Err(yEstim, Ref[i])
             ErrTot += erreur
@@ -87,9 +86,9 @@ if __name__ == '__main__':
         # nous devons lancer la passe Backward pour calculer le gradient.
         # Le calcul du gradient est déclenché par la syntaxe :
 
-        ErrTot.retain_grad()
+        #ErrTot.retain_grad()
         ErrTot.backward()
-
+        
         # GRADIENT DESCENT :
         # Effectuez la méthode de descente du gradient pour modifier la valeur
         # du paramètre d'apprentissage a. Etrangement, il faut préciser à Pytorch
