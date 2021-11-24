@@ -65,16 +65,16 @@ if __name__ == '__main__':
     # Les fonctions mathématiques sur les tenseurs s'utilisent ainsi :
     # torch.abs(..) / torch.min(..)  / torch.sum(..)  ...
 
-    ErrTot = torch.FloatTensor([0])
-    ErrTot.requires_grad = False
+    
 
 
     #    timeout variable can be omitted, if you use specific value in the while condition
-    timeout = 300   # [seconds]
+    timeout = 10   # [seconds]
 
     timeout_end = time.time() + timeout
     
     while time.time() < timeout_end:
+        ErrTot = torch.FloatTensor([0])
         for i in range(len(X)):
             yEstim = f(X[i][0], X[i][1], a)
 
