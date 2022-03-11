@@ -36,14 +36,14 @@ from torchvision import datasets, transforms
 
 # 3 couches Linear
 #   Qu9 : obtient-on un réel gain sur la qualité des prédictions ?
-#  - On n'obtient pas de réel gain sur la qualité des prédictions avec 3 couches.
+#  - On n'obtient pas de réel gain sur la qualité des prédictions avec 3 couches (à peine 0.15% de précision gagné).
 
 # Fonction Softmax
 #   Qu10 : pourquoi est il inutile de changer le code de la fonction TestOK ?
-#   - La fonction TestOK fonctionne de manière indépendante au fonctionnement des couches du réseau.
+#   - La fonction TestOK fonctionne de manière indépendante au fonctionnement des couches du réseau et du calcul de l'erreur totale.
 #   - En effet, la fonction TestOK compte jute le nombre de fois on le réseau a prédit la bonne catégorie
 #   - (pour chaque image, on récupère l'index correspondant au score maximal prédit, et on le compare
-#   - au résultat réel).
+#   - au résultat réel). On a donc pas besoin de calculer l'entropie de la prédiction.
 
 
 class Net(nn.Module):
@@ -71,6 +71,7 @@ class Net(nn.Module):
         self.FC3 = nn.Linear(self.c, self.d)
 
     def forward(self, x):
+
         n = x.shape[0]
         x = x.reshape((n, self.a))
         c1 = self.FC1(x)
@@ -78,18 +79,23 @@ class Net(nn.Module):
         c1_relu_c2 = self.FC2(c1_relu)
         c1_relu_c2_relu = F.relu(c1_relu_c2)
         c1_relu_c2_relu_c3 = self.FC3(c1_relu_c2_relu)
-        return c1_relu_c2_relu_c3
+        output = F.log_softmax(c1_relu_c2_relu_c3, dim=1)
+
+        return output
 
     def Loss(self, Scores, target):
-        nb = Scores.shape[0]
-        TRange = torch.arange(0, nb, dtype=torch.int64)
-        scores_cat_ideale = Scores[TRange, target]
-        scores_cat_ideale = scores_cat_ideale.reshape(nb, 1)
-        delta = 1
-        Scores = Scores + delta - scores_cat_ideale
-        x = F.relu(Scores)
-        err = torch.sum(x)
-        return err
+
+        # nb = Scores.shape[0]
+        # TRange = torch.arange(0, nb, dtype=torch.int64)
+        # scores_cat_ideale = Scores[TRange, target]
+        # scores_cat_ideale = scores_cat_ideale.reshape(nb, 1)
+        # delta = 1
+        # Scores = Scores + delta - scores_cat_ideale
+        # x = F.relu(Scores)
+        # err = torch.sum(x)
+        # return err
+
+        return F.nll_loss(Scores, target)
 
     def TestOK(self, Scores, target):
         pred = Scores.argmax(dim=1, keepdim=True)  # get the index of the max
