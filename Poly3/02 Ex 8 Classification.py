@@ -62,7 +62,7 @@ class Net(nn.Module):
 
         # Couche 2 :
         # - Entrée : 128
-        # - Sortie : 10 (catégories de sortie différentes)
+        # - Sortie : 64 (catégories de sortie différentes)
         self.FC2 = nn.Linear(self.b, self.c)
 
         # Couche 3 :
@@ -74,6 +74,7 @@ class Net(nn.Module):
 
         n = x.shape[0]
         x = x.reshape((n, self.a))
+
         c1 = self.FC1(x)
         c1_relu = F.relu(c1)
         c1_relu_c2 = self.FC2(c1_relu)
@@ -100,7 +101,7 @@ class Net(nn.Module):
     def TestOK(self, Scores, target):
         pred = Scores.argmax(dim=1, keepdim=True)  # get the index of the max
         pred = pred.reshape(target.shape)
-        eq = pred == target                      # True when correct prediction
+        eq = pred == target                        # True when correct prediction
         nbOK = eq.sum().item()                     # count
         return nbOK
 
