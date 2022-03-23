@@ -1,7 +1,9 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from torchvision import datasets, transforms
+import torch.nn.functional as F
+import torch.nn as nn
+import torch
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # Le réseau de neurones (1)
 
@@ -13,12 +15,13 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         # Couche : Convolution
-        # Prends des images RGB de dimention 32x32 => 32x32x32
+        # Prends des images RGB de dimention 32x32 => NBx3x32x32
         # Utilise un kernel de dimention 3x3
-        self.C1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=(3, 3))
+        self.C1 = nn.Conv2d(in_channels=3, out_channels=32,
+                            kernel_size=(3, 3), stride=1, padding=1)
 
         # Couche : Fully Connected
-        # Utilise 32x32x32 neurones afin d'analyser chaque convolution
+        # Utilise NBx32x32x32 neurones afin d'analyser chaque convolution
         # de l'image et les classifie en 10 catégories
         self.FC1 = nn.Linear(32*32*32, 10)
 
@@ -29,16 +32,16 @@ class Net(nn.Module):
     def forward(self, x):
 
         # On applique la couche de convolution
-        x = self.C1(x)  # Dimention (32,32,32)
+        x = self.C1(x)  # Dimention (NB,32,32,32)
 
         # On casse la linéarité avec la fonction d'activation Relu
-        x = F.relu(x)  # Dimention (32,32,32)
+        x = F.relu(x)  # Dimention (NB,32,32,32)
 
         # On applique l'applatissage (dense)
-        x = x.reshape(32*32*32)  # Dimention (32x32x32)
+        x = x.reshape((x.shape[0], 32*32*32))  # Dimention (NB,32x32x32)
 
         # On applique la couche fully connected
-        x = self.FC1(x)  # Dimention (10)
+        x = self.FC1(x)  # Dimention (NB,10)
 
         return x
 
