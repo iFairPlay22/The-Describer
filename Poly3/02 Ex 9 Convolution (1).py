@@ -100,8 +100,6 @@ def TRAIN(args, model, train_loader, optimizer, epoch):
         optimizer.step()
 
 # Test des performances du réseau
-
-
 def TEST(model, test_loader):
     ErrTot = 0
     nbOK = 0
@@ -142,10 +140,11 @@ def main(batch_size):
         [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     # On charge les images du dataset d'images "CIFAR10"
+    path = './data/ex9'
     TrainSet = datasets.CIFAR10(
-        './data', train=True,  download=True, transform=TRS)
+        path, train=True,  download=True, transform=TRS)
     TestSet = datasets.CIFAR10(
-        './data', train=False, download=True, transform=TRS)
+        path, train=False, download=True, transform=TRS)
 
     # On charge les données par paquets de taille batch_size
     train_loader = torch.utils.data.DataLoader(TrainSet, batch_size)

@@ -46,7 +46,10 @@ from torchvision import datasets, transforms
 #   - au résultat réel). On a donc pas besoin de calculer l'entropie de la prédiction.
 
 
+# Le réseau de neurones
 class Net(nn.Module):
+
+    # Initialisation du réseau
     def __init__(self):
         super(Net, self).__init__()
 
@@ -70,20 +73,21 @@ class Net(nn.Module):
         # - Sortie : 10 (catégories de sortie différentes)
         self.FC3 = nn.Linear(self.c, self.d)
 
+    # Fonction de calcul de la sortie du réseau
     def forward(self, x):
 
         n = x.shape[0]
         x = x.reshape((n, self.a))
 
-        c1 = self.FC1(x)
-        c1_relu = F.relu(c1)
-        c1_relu_c2 = self.FC2(c1_relu)
-        c1_relu_c2_relu = F.relu(c1_relu_c2)
-        c1_relu_c2_relu_c3 = self.FC3(c1_relu_c2_relu)
-        output = F.log_softmax(c1_relu_c2_relu_c3, dim=1)
+        x = self.FC1(x)
+        x = F.relu(x)
+        x = self.FC2(x)
+        x = F.relu(x)
+        x = self.FC3(x)
 
-        return output
+        return x
 
+    # Calcul de l'erreur totale
     def Loss(self, Scores, target):
 
         # nb = Scores.shape[0]
@@ -96,8 +100,18 @@ class Net(nn.Module):
         # err = torch.sum(x)
         # return err
 
-        return F.nll_loss(Scores, target)
+        # Permet de transformer des scores par catégorie en probabilité
+        # d'appartenances à chaque catégorie
+        y = F.log_softmax(Scores, dim=1)
 
+        # On calcule la dispersion des données. Plus les données sont dispersées,
+        # et moins on est sur de notre résultat, donc plus l'erreur totale est
+        # grande.
+        err = F.nll_loss(y, target)
+
+        return err
+
+    # Calcul du nombre de catégories correctement classifiées
     def TestOK(self, Scores, target):
         pred = Scores.argmax(dim=1, keepdim=True)  # get the index of the max
         pred = pred.reshape(target.shape)
@@ -107,33 +121,51 @@ class Net(nn.Module):
 
 ##############################################################################
 
-
+# Entrainement du réseau
 def TRAIN(args, model, train_loader, optimizer, epoch):
 
+    # Pour chaque batch (sous ensemble des données d'entrainement)
     for batch_it, (data, target) in enumerate(train_loader):
+
+        # On réinitialise le gradient
         optimizer.zero_grad()
+
+        # On calcule les scores du réseau (prédictions)
         Scores = model.forward(data)
+
+        # On calcule l'erreur totale
         loss = model.Loss(Scores, target)
+
+        # On ajuste les poids du réseau
         loss.backward()
         optimizer.step()
 
-        # if batch_it % 50 == 0:
-        #     print(
-        #         f'   It: {batch_it:3}/{len(train_loader):3} --- Loss: {loss.item():.6f}')
-
-
+# Test des performances du réseau
 def TEST(model, test_loader):
     ErrTot = 0
     nbOK = 0
     nbImages = 0
 
+    # On désactive le calcul du gradient lors des tests, car on ne
+    # le calcule que pendant les sessions d'entrainement
     with torch.no_grad():
+
+        # Pour chaque batch (sous ensemble des données de test)
         for data, target in test_loader:
+
+            # On calcule les scores du réseau (prédictions)
             Scores = model.forward(data)
+
+            # On calcule le nombre de lignes correctement prédites
             nbOK += model.TestOK(Scores, target)
+
+            # On calcule l'erreur totale
             ErrTot += model.Loss(Scores, target)
+
+            # On update le nombre d'images par rappor à la taille du batch
             nbImages += data.shape[0]
 
+    # On calcule le nombre moyen de lignes correctement prédites
     pc_success = 100. * nbOK / nbImages
     print(f'\nTest set:   Accuracy: {nbOK}/{nbImages} ({pc_success:.2f}%)\n')
 
@@ -142,29 +174,43 @@ def TEST(model, test_loader):
 
 def main(batch_size):
 
-    # Chargement des données et normalisation des données
+    # Normalisation des couleurs (channels)
+    # On uniformise les niveaux de proportion des couleurs dans l'image afin d'obtenir
+    # une distribution statistique ayant une moyenne de 0 et une variance de 1
     moy, dev = 0.1307, 0.3081
     TRS = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize(moy, dev)])
-    TrainSet = datasets.MNIST('./data', train=True,
+
+    # On charge les images du dataset d'images "MNIST"
+    path = './data/ex8'
+    TrainSet = datasets.MNIST(path, train=True,
                               download=True, transform=TRS)
-    TestSet = datasets.MNIST('./data', train=False,
+    TestSet = datasets.MNIST(path, train=False,
                              download=True, transform=TRS)
 
+    # On charge les données par paquets de taille batch_size
     train_loader = torch.utils.data.DataLoader(TrainSet, batch_size)
     test_loader = torch.utils.data.DataLoader(TestSet, len(TestSet))
 
-    # Création du réseau
+    # On initialise le réseau de neurones
     model = Net()
     optimizer = torch.optim.Adam(model.parameters())
 
+    # On teste le réseau la première fois afin de voir les performances initiales
     TEST(model,  test_loader)
+
+    # On va lancer 40 sessions d'entrainement / test afin de converger
     for epoch in range(40):
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         print(f'Train Epoch: {epoch:3}')
 
+
+        # On entraine le réseau
         TRAIN(batch_size, model,  train_loader, optimizer, epoch)
+
+        # On teste le réseau
         TEST(model,  test_loader)
 
 
+# Lancement du programme principal
 main(batch_size=64)
