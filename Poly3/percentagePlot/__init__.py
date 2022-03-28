@@ -1,6 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 class PercentagePlot:
 
@@ -15,12 +16,12 @@ class PercentagePlot:
     def addPoint(self, predictionScore):
 
         plt.scatter(self.__x, predictionScore)
-        # plt.pause(60)
-
         self.__x += 1
 
     def show(self):
         plt.show()
+        plt.savefig('./images/' + str(time.time()) + '.png')
+
 
 # p = PercentagePlot()
 # p.addPoint(10)
