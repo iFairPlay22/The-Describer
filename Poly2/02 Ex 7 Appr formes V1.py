@@ -81,14 +81,18 @@ class Net(nn.Module):
         return self._layer1(allCoords)
 
 
-def Error(predictedScores, correctScores):
+def Error(predictedScores, correctCategories):
     res = torch.FloatTensor([0])
+
+    indices = [i for i in range(len(predictedScores))]
+    goodCategScore = predictedScores[indices, correctCategories]
+
     for j in range(3):
-        goodCategScore = torch.diagonal(predictedScores[:, correctScores])
         currentCategScore = predictedScores[:, j]
         diff = torch.sub(currentCategScore, goodCategScore)
         positiveDiff = torch.max(torch.tensor([0]), diff)
         res += torch.sum(positiveDiff)
+
     return res
 
 
