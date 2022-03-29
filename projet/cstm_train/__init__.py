@@ -171,13 +171,14 @@ def train(output_resized_images_path, input_annotations_captions_train_path, out
             optimizer.step()
 
             # Print log info
-            if i % 10 == 0:
+            if i % 250 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'
                     .format(epoch, 5, i, total_num_steps, loss.item(), np.exp(loss.item()))) 
     
             # Save the model checkpoints
             if (i+1) % 1000 == 0:
                 fullModel.save(output_models_path, epoch, i)
+            
+            i += 1
 
         fullModel.save(output_models_path, epoch, i)
-        i += 1
