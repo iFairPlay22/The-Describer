@@ -201,8 +201,8 @@ def main(batch_size):
     optimizer = torch.optim.Adam(model.parameters())
 
     # On va lancer 40 sessions d'entrainement / test afin de converger
-    totalEpochs = 20
-    percentagePlot = PercentagePlot(0, totalEpochs, 90, 100)
+    totalEpochs = 40
+    percentagePlot = PercentagePlot("ex8", 0, totalEpochs, 90, 100)
 
     # On teste le réseau la première fois afin de voir les performances initiales    
     predictionSuccess = TEST(model, test_loader)

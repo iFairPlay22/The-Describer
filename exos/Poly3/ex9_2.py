@@ -1,12 +1,10 @@
 from percentagePlot import PercentagePlot
-from torchvision import datasets, transforms
-import torch.nn.functional as F
-import torch.nn as nn
 import torch
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision import datasets, transforms
 
-# Le réseau de neurones (1)
+# Le réseau de neurones (2)
 
 
 class Net(nn.Module):
@@ -21,10 +19,16 @@ class Net(nn.Module):
         self.C1 = nn.Conv2d(in_channels=3, out_channels=32,
                             kernel_size=(3, 3), stride=1, padding=1)
 
+        # Couche : Convolution
+        # Prends une liste de dimention NBx32x32x32 => NBx64*32*32
+        # Utilise un kernel de dimention 3x3
+        self.C2 = nn.Conv2d(
+            in_channels=32, out_channels=64, kernel_size=(3, 3), stride=1, padding=1)
+
         # Couche : Fully Connected
-        # Utilise NBx32x32x32 neurones afin d'analyser chaque convolution
+        # Utilise NBx64x32x32 neurones afin d'analyser chaque convolution
         # de l'image et les classifie en 10 catégories
-        self.FC1 = nn.Linear(32*32*32, 10)
+        self.FC1 = nn.Linear(64*32*32, 10)
 
         # Permet de passer d'une probabilité d'appartenance à un calcul de dispersion
         self.criterion = nn.CrossEntropyLoss()
@@ -38,11 +42,17 @@ class Net(nn.Module):
         # On casse la linéarité avec la fonction d'activation Relu
         x = F.relu(x)  # Dimention (NB,32,32,32)
 
+        # On applique la couche de convolution
+        x = self.C2(x)  # Dimention (NB,64,32,32)
+
+        # On casse la linéarité avec la fonction d'activation Relu
+        x = F.relu(x)  # Dimention (NB,64,32,32)
+
         # On applique l'applatissage (dense)
-        x = x.reshape((x.shape[0], 32*32*32))  # Dimention (NB,32x32x32)
+        x = x.reshape((x.shape[0], 64*32*32))  # Dimention (NB,64x32x32)
 
         # On applique la couche fully connected
-        x = self.FC1(x)  # Dimention (NB,10)
+        x = self.FC1(x)  # Dimention (10)
 
         return x
 
@@ -130,7 +140,7 @@ def TEST(model, test_loader):
     print(f'\nTest set:   Accuracy: {nbOK}/{nbImages} ({pc_success:.2f}%)\n')
 
     return pc_success
-
+    
 ##############################################################################
 
 
@@ -156,10 +166,10 @@ def main(batch_size):
     # On initialise le réseau de neurones
     model = Net()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    
+
     # On va lancer 40 sessions d'entrainement / test afin de converger
-    totalEpochs = 20
-    percentagePlot = PercentagePlot(0, totalEpochs, 40, 100)
+    totalEpochs = 40
+    percentagePlot = PercentagePlot("ex9_2", 0, totalEpochs, 40, 100)
 
     # On teste le réseau la première fois afin de voir les performances initiales    
     predictionSuccess = TEST(model, test_loader)
@@ -177,6 +187,6 @@ def main(batch_size):
         percentagePlot.addPoint(predictionSuccess)
 
     percentagePlot.show()
-
+    
 # Lancement du programme principal
 main(batch_size=64)
