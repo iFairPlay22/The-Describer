@@ -179,6 +179,17 @@ class FullModel(nn.Module):
         )
 
     def load(self):
+
+        decoderFile = ''
+        encoderFile = ''
+
+        files = os.listdir('models_dir')
         
-        self.__encoder_model.load_state_dict(torch.load('models_dir/encoder-2-3000.ckpt'))
-        self.__decoder_model.load_state_dict(torch.load('models_dir/decoder-2-3000.ckpt'))
+        for filename in files:
+            if(filename.startswith('decoder')):
+                decoderFile = filename
+            if(filename.startswith('encoder')):
+                encoderFile = filename
+        
+        self.__encoder_model.load_state_dict(torch.load('models_dir/' + encoderFile))
+        self.__decoder_model.load_state_dict(torch.load('models_dir/' + decoderFile))
