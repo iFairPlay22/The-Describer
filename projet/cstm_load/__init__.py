@@ -34,6 +34,9 @@ class Vocab(object):
             return self.__w2i['<unk>']
 
         return self.__w2i[token]
+
+    def getToken(self, index):
+        return self.__i2w[index]
  
     # Get the length of the vocabulary
     def __len__(self):

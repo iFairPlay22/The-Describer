@@ -136,7 +136,7 @@ def train(output_resized_images_path, input_annotations_captions_train_path, out
     custom_data_loader = get_loader(output_resized_images_path, input_annotations_captions_train_path, vocabulary, transform, 128, shuffle=True, num_workers=2) 
 
     # Build the models
-    fullModel = cstm_model.FullModel(device, image_shape, vocabulary)
+    fullModel = cstm_model.FullModel(device, image_shape, vocabulary, True)
 
     # Optimizers
     optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=0.001)

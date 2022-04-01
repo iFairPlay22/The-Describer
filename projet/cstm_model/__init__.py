@@ -36,6 +36,8 @@ class CNNModel(nn.Module):
 
         # Followed by a batch normalization layer
         self.__batch_norm = nn.BatchNorm1d(embedding_size, momentum=0.01)
+
+        print(embedding_size)
         
     def forward(self, input_images):
         """Extract feature vectors from input images."""
@@ -131,12 +133,15 @@ class LSTMModel(nn.Module):
 
 class FullModel(nn.Module):
 
-    def __init__(self, device, image_shape, vocabulary):
+    def __init__(self, device, image_shape, vocabulary, training=True):
         """Combine the CNN and LSTM models."""
         super(FullModel, self).__init__()
 
         # Build the models
         self.__encoder_model = CNNModel(image_shape[0]).to(device)
+        if not(training):
+            self.__encoder_model.eval()
+
         self.__decoder_model = LSTMModel(image_shape[0], image_shape[0] + image_shape[1], len(vocabulary), 1).to(device)        
             
         # Loss and optimizer
