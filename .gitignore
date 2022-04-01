@@ -1,6 +1,7 @@
 exos/data/*
 exos/Poly3/images/*
 projet/data_dir/*
+projet/models_dir/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

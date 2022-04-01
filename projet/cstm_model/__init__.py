@@ -133,15 +133,12 @@ class LSTMModel(nn.Module):
 
 class FullModel(nn.Module):
 
-    def __init__(self, device, image_shape, vocabulary, training=True):
+    def __init__(self, device, image_shape, vocabulary):
         """Combine the CNN and LSTM models."""
         super(FullModel, self).__init__()
 
         # Build the models
         self.__encoder_model = CNNModel(image_shape[0]).to(device)
-        if not(training):
-            self.__encoder_model.eval()
-
         self.__decoder_model = LSTMModel(image_shape[0], image_shape[0] + image_shape[1], len(vocabulary), 1).to(device)        
             
         # Loss and optimizer
@@ -198,3 +195,12 @@ class FullModel(nn.Module):
         
         self.__encoder_model.load_state_dict(torch.load('models_dir/' + encoderFile))
         self.__decoder_model.load_state_dict(torch.load('models_dir/' + decoderFile))
+
+
+    def trainMode(self):
+        self.__encoder_model.train()
+        self.__decoder_model.train()
+
+    def testMode(self):
+        self.__encoder_model.eval()
+        self.__decoder_model.eval()

@@ -49,6 +49,18 @@ class Vocab(object):
             self.__i2w[self.__index] = token
             self.__index += 1
 
+    def save(self, output):
+        
+        print("Save the vocabulary wrapper to '{}'".format(output))
+        with open(output, 'wb') as f:
+            pickle.dump(self, f)
+
+    def load(output):
+    
+        print("Load the vocabulary wrapper from '{}'".format(output))
+        with open(output, 'rb') as f:
+            return pickle.load(f)
+
 # Step 1: Build the vocabulary wrapper and save it to disk.
 
 def build_vocabulary(json, threshold):
@@ -87,43 +99,55 @@ def build_vocabulary(json, threshold):
         
     return vocab
 
-def load_store_vocabulary(input, output):
+def store_vocabulary(input, output):
 
-    print("\n\n==> load_store_vocabulary()")
+    print("\n\n==> store_vocabulary()")
 
     print("Load the data from '{}'".format(input))
     vocab = build_vocabulary(json=input, threshold=4)
     print("Total vocabulary size: {}".format(len(vocab)))
 
-    print("Save the vocabulary wrapper to '{}'".format(output))
-    with open(output, 'wb') as f:
-        pickle.dump(vocab, f)
+    vocab.save(output)
 
 # Step 2: Resize the images
+
+def load_image(input_image_file_path, device, transform=None):
+    img = Image.open(input_image_file_path)
+    img = img.resize([224, 224], Image.LANCZOS).convert('RGB')
+    
+    if transform is not None:
+        img = transform(img).unsqueeze(0)
+    
+    return img.to(device)
 
 def reshape_image(image, shape):
     # Resize an image to the given shape
     return image.resize(shape, Image.ANTIALIAS)
  
-def reshape_images(input, output, shape):
+def reshape_images(io, shape):
 
     print("\n\n==> reshape_images()")
-
-    # We create the output directory if it does not exist
-    if not os.path.exists(output):
-        os.makedirs(output)
-    print("Resize images in path '{}'".format(output))
- 
+    
     # Load the images
-    images = os.listdir(input)
+    for obj in tqdm(io):
 
-    for im in tqdm(images):
+        input = obj["input"]
+        output = obj["output"]
 
-        with open(os.path.join(input, im), 'r+b') as f:
-            with Image.open(f) as image:
+        # We create the output directory if it does not exist
+        if not os.path.exists(output):
+            os.makedirs(output)
+            
+        print("Resize images in path '{}'".format(output))
+    
+        images = os.listdir(input)
+        for im in tqdm(images):
 
-                # Reshape them
-                image = reshape_image(image, shape)
+            with open(os.path.join(input, im), 'r+b') as f:
+                with Image.open(f) as image:
 
-                # Save them
-                image.save(os.path.join(output, im), image.format)
+                    # Reshape them
+                    image = reshape_image(image, shape)
+
+                    # Save them
+                    image.save(os.path.join(output, im), image.format)

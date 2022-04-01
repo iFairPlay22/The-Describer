@@ -17,6 +17,7 @@ import torchvision.transforms as transforms
 from torch.nn.utils.rnn import pack_padded_sequence
 
 import cstm_model as cstm_model
+import cstm_predict as cstm_predict
 
 class CustomCocoDataset(data.Dataset):
     
@@ -117,26 +118,24 @@ def get_loader(data_path, input_annotations_captions_train_path, vocabulary, tra
     coco_dataset = CustomCocoDataset(data_path, input_annotations_captions_train_path, vocabulary, transform)
     
     # Data loader for COCO dataset
-    custom_data_loader = torch.utils.data.DataLoader(dataset=coco_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_function)
+    custom_training_data_loader = torch.utils.data.DataLoader(dataset=coco_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_function)
     
-    return custom_data_loader
+    return custom_training_data_loader
 
 
-def train(output_resized_images_path, input_annotations_captions_train_path, output_models_path, output_vocabulary_path, device, image_shape, transform):
+def train(vocabulary, fullModel, images_path, captions_path, output_models_path, output_vocabulary_path, device, image_shape, transform):
 
     # Create model directory
     if not os.path.exists(output_models_path):
         os.makedirs(output_models_path)
 
-    # Load vocabulary wrapper
-    with open(output_vocabulary_path, 'rb') as f:
-        vocabulary = pickle.load(f)
-
     # Build data loader
-    custom_data_loader = get_loader(output_resized_images_path, input_annotations_captions_train_path, vocabulary, transform, 128, shuffle=True, num_workers=2) 
+    batch_size = 128
+    custom_training_data_loader = get_loader(images_path[0]["output"], captions_path[0], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+    custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
 
-    # Build the models
-    fullModel = cstm_model.FullModel(device, image_shape, vocabulary, True)
+    # Train the models
+    fullModel.train()
 
     # Optimizers
     optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=0.001)
@@ -144,13 +143,15 @@ def train(output_resized_images_path, input_annotations_captions_train_path, out
     # Train the models
     print("\n\n==> Train the models...")
     
-    total_num_steps = len(custom_data_loader)
-    for epoch in tqdm(range(5)):
+    total_num_steps = len(custom_training_data_loader)
+    for epoch in tqdm(range(10)):
 
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
         i = 0
-        for images, captions, lens in tqdm(custom_data_loader):
+
+        # Learn
+        for images, captions, lens in tqdm(custom_training_data_loader):
     
             # Set mini-batch dataset
             images = images.to(device)
@@ -166,7 +167,6 @@ def train(output_resized_images_path, input_annotations_captions_train_path, out
             # We get the total error
             loss    = fullModel.loss(outputs, tgts)
 
-            # fullModel.zero_grad()
             loss.backward()
             optimizer.step()
 
@@ -178,7 +178,19 @@ def train(output_resized_images_path, input_annotations_captions_train_path, out
             # Save the model checkpoints
             if (i+1) % 1000 == 0:
                 fullModel.save(output_models_path, epoch, i)
-            
+
             i += 1
 
+        # Test
+        for images, captions, lens in tqdm(custom_testing_data_loader):
+            cstm_predict.testBatch(fullModel, images, captions)
+
+            for j in range(batch_size):
+
+                prediction = cstm_predict.predict(images[j], vocabulary, fullModel)
+                print(prediction)
+                print(captions[j])
+                exit()
+
+        # We save the weights of the models
         fullModel.save(output_models_path, epoch, i)
