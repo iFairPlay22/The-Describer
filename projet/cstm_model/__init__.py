@@ -81,7 +81,8 @@ class LSTMModel(nn.Module):
         
         # LSTM layer
         self.__lstm_layer = nn.LSTM(embedding_size, hidden_layer_size, num_layers, batch_first=True)
-        
+        # self.__lstm_layer = nn.GRU(embedding_size, hidden_layer_size, num_layers=2, dropout=0.8, bidirectional=True)
+
         # Fully connected linear layer
         self.__linear_layer = nn.Linear(hidden_layer_size, vocabulary_size)
         
