@@ -23,7 +23,7 @@ class CNNModel(nn.Module):
     def __init__(self, embedding_size):
         super(CNNModel, self).__init__()
 
-        print("\n\n==> Intializating CNNModel()")
+        print("\n\n==> InItializating CNNModel()")
 
         # We use a pre-trained CNN model available under the PyTorch models repository: the ResNet 152 architecture
         # We remove the last layer of this pre-trained ResNet model 
@@ -36,8 +36,6 @@ class CNNModel(nn.Module):
 
         # Followed by a batch normalization layer
         self.__batch_norm = nn.BatchNorm1d(embedding_size, momentum=0.01)
-
-        print(embedding_size)
         
     def forward(self, input_images):
         """Extract feature vectors from input images."""
@@ -74,7 +72,7 @@ class LSTMModel(nn.Module):
     def __init__(self, embedding_size, hidden_layer_size, vocabulary_size, num_layers, max_seq_len=20):
         super(LSTMModel, self).__init__()
 
-        print("\n\n==> Intializating LSTMModel()")
+        print("\n\n==> InItializating LSTMModel()")
 
         # Embedding layer 
         self.__embedding_layer = nn.Embedding(vocabulary_size, embedding_size)

@@ -49,15 +49,26 @@ class Vocab(object):
             self.__i2w[self.__index] = token
             self.__index += 1
 
+    def translate(self, sentence):
+
+        words = []
+        for word in sentence:
+            word = self.getToken(word)
+            words.append(word)
+            if word == '<end>':
+                break
+
+        return " ".join(words)
+
     def save(self, output):
         
-        print("Save the vocabulary wrapper to '{}'".format(output))
+        print("\n\nSave the vocabulary wrapper to '{}'".format(output))
         with open(output, 'wb') as f:
             pickle.dump(self, f)
 
     def load(output):
     
-        print("Load the vocabulary wrapper from '{}'".format(output))
+        print("\n\nLoad the vocabulary wrapper from '{}'".format(output))
         with open(output, 'rb') as f:
             return pickle.load(f)
 
@@ -129,7 +140,7 @@ def reshape_images(io, shape):
     print("\n\n==> reshape_images()")
     
     # Load the images
-    for obj in tqdm(io):
+    for obj in io:
 
         input = obj["input"]
         output = obj["output"]

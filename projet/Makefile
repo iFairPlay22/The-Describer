@@ -8,8 +8,8 @@ install:
 
 	# python
 	sudo apt-get install python3-pip
-	pip3 install torch torchvision torchaudio
-	pip3 install nltk pycocotools tqdm
+	pip3 install torch torchvision torchaudio nltk pycocotools tqdm spacy
+	python3 -m spacy download en
 	
 	# create a data directory
 	mkdir data_dir

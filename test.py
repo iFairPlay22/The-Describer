@@ -35,6 +35,7 @@ class Vocab(object):
  
     def __len__(self):
         return len(self.w2i)
+        
     def add_token(self, token):
         if not token in self.w2i:
             self.w2i[token] = self.index
