@@ -1,3 +1,6 @@
+import spacy 
+import difflib
+import re
 import os
 from tqdm import tqdm
 import nltk
@@ -18,12 +21,13 @@ from torch.nn.utils.rnn import pack_padded_sequence
 
 import cstm_model as cstm_model
 import cstm_predict as cstm_predict
+import cstm_plot as cstm_plot
 
 class CustomCocoDataset(data.Dataset):
     
     def __init__(self, output_rezized_image_folder_path, input_annotations_captions_train_path, vocabulary, transform=None):
 
-        print("\n\n==> Intializating CustomCocoDataset()")
+        print("\n\n==> InItializating CustomCocoDataset()")
 
         self.__output_rezized_image_folder_path = output_rezized_image_folder_path
         self.__data = COCO(input_annotations_captions_train_path)
@@ -122,8 +126,108 @@ def get_loader(data_path, input_annotations_captions_train_path, vocabulary, tra
     
     return custom_training_data_loader
 
+def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, totalBatch, output_models_path):
 
-def train(vocabulary, fullModel, images_path, captions_path, output_models_path, output_vocabulary_path, device, image_shape, transform):
+    print("\n\n==> train_learn()")
+    
+    batchNb = 0
+
+    # Learn
+    for images, captions, lens in tqdm(custom_training_data_loader):
+
+        # Set mini-batch dataset
+        images = images.to(device)
+        captions = captions.to(device)
+        tgts = pack_padded_sequence(captions, lens, batch_first=True)[0]
+
+        # Forward, backward and optimize
+        optimizer.zero_grad()
+
+        # We make predictions
+        outputs = fullModel.forward(images, captions, lens)
+
+        # We get the total error
+        loss    = fullModel.loss(outputs, tgts)
+
+        loss.backward()
+        optimizer.step()
+
+        batchNb += 1
+
+        # Print log info
+        if batchNb % 250 == 0:
+            print(' [LEARNING] : Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, totalEpochs, batchNb, totalBatch, loss.item(), np.exp(loss.item()))) 
+
+        # Save the model checkpoints
+        if (batchNb+1) % 1000 == 0:
+            fullModel.save(output_models_path, epoch, batchNb)
+
+    # We save the weights of the models
+    fullModel.save(output_models_path, epoch, totalBatch)
+
+def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, totalBatch, spacyEn, plot):
+
+    print("\n\n==> train_test()")
+    
+    batchNb = 0
+    assimilatedWellPredictedNb = 0
+    imageNb = 0
+
+    ratios = [
+        { "min": 20, "color": "red",    "sum": 0 },
+        { "min": 40, "color": 'orange', "sum": 0 },
+        { "min": 60, "color": 'blue',   "sum": 0 },
+        { "min": 80, "color": 'cyan',   "sum": 0 },
+        { "min": 90, "color": 'green',  "sum": 0 }
+    ]
+
+    # Test
+    for images, captions, lens in tqdm(custom_testing_data_loader):
+        
+        images = images.to(device)
+        captions = captions.to(device)
+        predictions = cstm_predict.predict(images, vocabulary, fullModel)
+        imagesNg = len(images)
+
+        for j in range(imagesNg):
+
+            # Get the caption / prediction
+            prediction = vocabulary.translate(predictions["indices"][j].cpu().numpy())
+            caption = vocabulary.translate(captions[j].cpu().numpy())[1:-1]
+            
+            # Remove stop words from the string & punctuation
+            predictedSentance = re.sub(r'[^\w\s]', '', prediction).split(" ")
+            goodSentance = re.sub(r'[^\w\s]', '', caption).split(" ")
+
+            # Words to integer list
+            sw = spacyEn.Defaults.stop_words
+            predictedKeywords = list(set( w for w in predictedSentance if w and not w in sw ))
+            goodKeywords = list(set( w for w in goodSentance if w and not w in sw ))
+
+            # Update ratios
+            currentRatio = difflib.SequenceMatcher(None, predictedKeywords, goodKeywords).ratio()
+            for ratio in ratios:
+                if ratio["min"] <= 100 * currentRatio:
+                    ratio["sum"] += 1
+            
+            imageNb += 1
+
+        batchNb += 1
+
+        # Print log info
+        if batchNb % 250 == 0:
+            print(' [TESTING] : Epoch [{}/{}], Step [{}/{}]'.format(epoch, totalEpochs, batchNb, totalBatch))
+            for ratio in ratios:
+                print(' Good predictions for ratio {} : {}% ({}/{})'.format(ratio["min"], ratio["sum"] * 100 / imageNb, ratio["sum"], imageNb))
+
+    print(' [TESTING] : Epoch [{}/{}], Step [{}/{}]'.format(epoch, totalEpochs, batchNb, totalBatch))
+    for ratio in ratios:
+        ratio["avg"] = ratio["sum"] * 100 / imageNb
+        print(' Good predictions for ratio {} : {}% ({}/{})'.format(ratio["min"], ratio["avg"], ratio["sum"], imageNb))
+        plot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
+    
+
+def train(vocabulary, fullModel, images_path, captions_path, output_models_path, output_vocabulary_path, device, image_shape, transform, spacyEn):
 
     # Create model directory
     if not os.path.exists(output_models_path):
@@ -131,8 +235,12 @@ def train(vocabulary, fullModel, images_path, captions_path, output_models_path,
 
     # Build data loader
     batch_size = 128
+
     custom_training_data_loader = get_loader(images_path[0]["output"], captions_path[0], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+    training_total_num_steps = len(custom_training_data_loader) // batch_size
+    
     custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+    testing_total_num_steps = len(custom_training_data_loader) // batch_size
 
     # Train the models
     fullModel.train()
@@ -143,54 +251,18 @@ def train(vocabulary, fullModel, images_path, captions_path, output_models_path,
     # Train the models
     print("\n\n==> Train the models...")
     
-    total_num_steps = len(custom_training_data_loader)
-    for epoch in tqdm(range(10)):
+    totalEpochs = 5
+
+    # Display the plot
+    plot = cstm_plot.PercentagePlot("Prédiction automatique de contenu d'image", 0, totalEpochs - 1, 0, 100)
+
+    for epoch in tqdm(range(totalEpochs)):
 
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
-        i = 0
+        train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, training_total_num_steps, output_models_path)
 
-        # Learn
-        for images, captions, lens in tqdm(custom_training_data_loader):
-    
-            # Set mini-batch dataset
-            images = images.to(device)
-            captions = captions.to(device)
-            tgts = pack_padded_sequence(captions, lens, batch_first=True)[0]
+        train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, plot)
 
-            # Forward, backward and optimize
-            optimizer.zero_grad()
-
-            # We make predictions
-            outputs = fullModel.forward(images, captions, lens)
-
-            # We get the total error
-            loss    = fullModel.loss(outputs, tgts)
-
-            loss.backward()
-            optimizer.step()
-
-            # Print log info
-            if i % 250 == 0:
-                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'
-                    .format(epoch, 5, i, total_num_steps, loss.item(), np.exp(loss.item()))) 
-    
-            # Save the model checkpoints
-            if (i+1) % 1000 == 0:
-                fullModel.save(output_models_path, epoch, i)
-
-            i += 1
-
-        # Test
-        for images, captions, lens in tqdm(custom_testing_data_loader):
-            cstm_predict.testBatch(fullModel, images, captions)
-
-            for j in range(batch_size):
-
-                prediction = cstm_predict.predict(images[j], vocabulary, fullModel)
-                print(prediction)
-                print(captions[j])
-                exit()
-
-        # We save the weights of the models
-        fullModel.save(output_models_path, epoch, i)
+    # Display the plot
+    plot.show()
