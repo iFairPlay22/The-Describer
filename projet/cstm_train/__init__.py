@@ -227,7 +227,7 @@ def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_
         plot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
     
 
-def train(vocabulary, fullModel, images_path, captions_path, output_models_path, output_vocabulary_path, device, image_shape, transform, spacyEn):
+def train(vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn):
 
     # Create model directory
     if not os.path.exists(output_models_path):
@@ -240,7 +240,7 @@ def train(vocabulary, fullModel, images_path, captions_path, output_models_path,
     training_total_num_steps = len(custom_training_data_loader) // batch_size
     
     custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
-    testing_total_num_steps = len(custom_training_data_loader) // batch_size
+    testing_total_num_steps = len(custom_testing_data_loader) // batch_size
 
     # Train the models
     fullModel.train()
@@ -261,6 +261,34 @@ def train(vocabulary, fullModel, images_path, captions_path, output_models_path,
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
         train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, training_total_num_steps, output_models_path)
+
+        train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, plot)
+
+    # Display the plot
+    plot.show()
+
+def testAll(vocabulary, fullModel, images_path, captions_path, device, transform, spacyEn):
+
+    # Build data loader
+    batch_size = 128
+    
+    custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+    testing_total_num_steps = len(custom_testing_data_loader) // batch_size
+
+    # Train the models
+    fullModel.test()
+
+    # Train the models
+    print("\n\n==> Test the model...")
+    
+    totalEpochs = 5
+
+    # Display the plot
+    plot = cstm_plot.PercentagePlot("Prédiction automatique de contenu d'image", 0, totalEpochs - 1, 0, 100)
+
+    for epoch in tqdm(range(totalEpochs)):
+
+        print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
         train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, plot)
 

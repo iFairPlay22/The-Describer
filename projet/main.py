@@ -72,8 +72,9 @@ if __name__ == "__main__":
 
     todo = [ 
         # "install", 
-        "train",
-        # "test" 
+        #"train",
+        "test"
+        # "predict"
     ]
 
     # Step 1 : Build the vocabulary & Build the images folder
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         cstm_load.reshape_images(images_path, image_shape)
 
 
-    if "train" in todo or "test" in todo:
+    if "train" in todo or "test" in todo or "predict" in todo:
 
         # Load the vocabulary
         vocabulary = Vocab.load(output_vocabulary_path)
@@ -97,10 +98,18 @@ if __name__ == "__main__":
         # Step 2 : Train the model
         if "train" in todo:
             
-            cstm_train.train(vocabulary, fullModel, images_path, captions_path, output_models_path, output_vocabulary_path, device, image_shape, transform, spacyEn)
+            cstm_train.train(vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn)
 
         # Step 3 : Test the model 
         if "test" in todo:
+
+            # Load the weights of the previous training
+            fullModel.load()
+
+            cstm_train.testAll(vocabulary, fullModel, images_path, captions_path, device, transform, spacyEn)
+
+        # Step 3 : Test the model 
+        if "predict" in todo:
 
             # Load the weights of the previous training
             fullModel.load()
