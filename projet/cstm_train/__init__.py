@@ -166,7 +166,7 @@ def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch
 
     # We save the weights of the models
     learnPlot.addPoint("Total loss", "red", sum(allLoss))
-    learnPlot.addPoint("Average loss", "green", sum(allLoss) / len(allLoss))
+    # learnPlot.addPoint("Average loss", "green", sum(allLoss) / len(allLoss))
     fullModel.save(output_models_path, epoch, totalBatch)
 
 def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, totalBatch, spacyEn, testPlot):
