@@ -126,13 +126,14 @@ def get_loader(data_path, input_annotations_captions_train_path, vocabulary, tra
     
     return custom_training_data_loader
 
-def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, totalBatch, output_models_path, trainPlot):
+def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, totalBatch, output_models_path, learnPlot):
 
     print("\n\n==> train_learn()")
     
     batchNb = 0
 
     # Learn
+    allLoss = []
     for images, captions, lens in tqdm(custom_training_data_loader):
 
         # Set mini-batch dataset
@@ -148,7 +149,7 @@ def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch
 
         # We get the total error
         loss    = fullModel.loss(outputs, tgts)
-        trainPlot.addPoint("Loss", "red", loss.item())
+        allLoss.append(loss.item())
 
         loss.backward()
         optimizer.step()
@@ -164,9 +165,11 @@ def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch
             fullModel.save(output_models_path, epoch, batchNb)
 
     # We save the weights of the models
+    learnPlot.addPoint("Total loss", "red", sum(allLoss))
+    learnPlot.addPoint("Average loss", "green", sum(allLoss) / len(allLoss))
     fullModel.save(output_models_path, epoch, totalBatch)
 
-def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, totalBatch, spacyEn, plot):
+def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, totalBatch, spacyEn, testPlot):
 
     print("\n\n==> train_test()")
     
@@ -224,9 +227,8 @@ def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_
     for ratio in ratios:
         ratio["avg"] = ratio["sum"] * 100 / imageNb
         print(' Good predictions for ratio {} : {}% ({}/{})'.format(ratio["min"], ratio["avg"], ratio["sum"], imageNb))
-        plot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
+        testPlot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
     
-
 def train(totalEpochs, step, vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn):
 
     # Create model directory
@@ -253,23 +255,25 @@ def train(totalEpochs, step, vocabulary, fullModel, images_path, captions_path, 
 
     # Display the plot
     
-    trainPlot = cstm_plot.SmartPlot("[Entrainement] : Loss", "Epochs", "Loss")
-    testPlot = cstm_plot.SmartPlot("[Test] : Ratios", "Epochs", "Ratios")
+    learnPlot = cstm_plot.SmartPlot("Training", "Epochs", "Loss")
+    testPlot = cstm_plot.SmartPlot("Test", "Epochs", "Ratios")
 
     for epoch in tqdm(range(totalEpochs)):
 
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
-        train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, training_total_num_steps, output_models_path, trainPlot)
+        train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, training_total_num_steps, output_models_path, learnPlot)
+
+        # Save the plot
+        learnPlot.build()
 
         train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, testPlot)
 
         # Save the plot
-        trainPlot.build()
         testPlot.build()
 
     # Save the plot
-    trainPlot.build()
+    learnPlot.build()
     testPlot.build()
 
 def testAll(vocabulary, fullModel, images_path, captions_path, device, transform, spacyEn):

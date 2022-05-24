@@ -29,8 +29,9 @@ class SmartPlot:
         self.__ax.set_title(self.__title)
         self.__ax.legend()
 
-        dateString = str(datetime.now())[0:19].replace("-", "_").replace(":", "_").replace(" ", "_") + "_"
-        self.__fig.savefig('./output/plot_' + dateString + "_" + self.__title + '.png')
+        fileName = './output/plot_' + str(datetime.now())[0:19] + "_" + self.__title 
+        fileName = fileName.replace("-", "_").replace(":", "_").replace(" ", "_")
+        self.__fig.savefig(fileName + '.png')
 
     def show():
         plt.show()
