@@ -7,6 +7,7 @@ from PIL import Image
 from collections import Counter
 from pycocotools.coco import COCO
 import matplotlib.pyplot as plt
+from datetime import datetime
  
 import torch
 import torch.nn as nn
@@ -169,14 +170,16 @@ class FullModel(nn.Module):
 
     def save(self, output_models_path, epoch, batch_id):
 
+        dateString = str(datetime.now())[0:19].replace("-", "_").replace(":", "_").replace(" ", "_") + "_"
+
         torch.save(
             self.__decoder_model.state_dict(), 
-            os.path.join(output_models_path, 'decoder-{}-{}.ckpt'.format(epoch+1, batch_id + 1))
+            os.path.join(output_models_path, 'decoder_{dateString}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
         )
 
         torch.save(
             self.__encoder_model.state_dict(), 
-            os.path.join(output_models_path, 'encoder-{}-{}.ckpt'.format(epoch+1, batch_id + 1))
+            os.path.join(output_models_path, 'encoder_{dateString}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
         )
 
     def load(self):

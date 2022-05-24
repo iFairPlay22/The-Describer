@@ -126,7 +126,7 @@ def get_loader(data_path, input_annotations_captions_train_path, vocabulary, tra
     
     return custom_training_data_loader
 
-def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, totalBatch, output_models_path):
+def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, totalBatch, output_models_path, trainPlot):
 
     print("\n\n==> train_learn()")
     
@@ -148,6 +148,7 @@ def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch
 
         # We get the total error
         loss    = fullModel.loss(outputs, tgts)
+        trainPlot.addPoint("Loss", "red", loss.item())
 
         loss.backward()
         optimizer.step()
@@ -170,7 +171,6 @@ def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_
     print("\n\n==> train_test()")
     
     batchNb = 0
-    assimilatedWellPredictedNb = 0
     imageNb = 0
 
     ratios = [
@@ -254,18 +254,21 @@ def train(vocabulary, fullModel, images_path, captions_path, output_models_path,
     totalEpochs = 5
 
     # Display the plot
-    plot = cstm_plot.PercentagePlot("Prédiction automatique de contenu d'image", 0, totalEpochs - 1, 0, 100)
+    
+    trainPlot = cstm_plot.SmartPlot("[Entrainement] : Loss", "Epochs", "Loss")
+    testPlot = cstm_plot.SmartPlot("[Test] : Ratios", "Epochs", "Ratios")
 
     for epoch in tqdm(range(totalEpochs)):
 
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
-        train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, training_total_num_steps, output_models_path)
+        train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, training_total_num_steps, output_models_path, trainPlot)
 
-        train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, plot)
+        train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, testPlot)
 
     # Display the plot
-    plot.show()
+    trainPlot.build()
+    testPlot.build()
 
 def testAll(vocabulary, fullModel, images_path, captions_path, device, transform, spacyEn):
 
@@ -284,7 +287,7 @@ def testAll(vocabulary, fullModel, images_path, captions_path, device, transform
     totalEpochs = 5
 
     # Display the plot
-    plot = cstm_plot.PercentagePlot("Prédiction automatique de contenu d'image", 0, totalEpochs - 1, 0, 100)
+    plot = cstm_plot.cstm_plot.SmartPlot("[Test] : Ratios", "Epochs", "Ratios")
 
     for epoch in tqdm(range(totalEpochs)):
 
@@ -293,4 +296,4 @@ def testAll(vocabulary, fullModel, images_path, captions_path, device, transform
         train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, plot)
 
     # Display the plot
-    plot.show()
+    plot.build()

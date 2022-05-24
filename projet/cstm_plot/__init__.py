@@ -1,31 +1,61 @@
-from turtle import color
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-import time
+import numpy as np
+from datetime import datetime 
 
-class PercentagePlot:
+class SmartPlot:
 
-    def __init__(self, title="percentage_plot", xStart=0, xEnd=10, yStart=0, yEnd=100):
+    def __init__(self, title="percentage_plot", x_label="x_label", y_label="y_label"):
 
-        plt.figure()
-        plt.xlim(xStart, xEnd)
-        plt.ylim(yStart, yEnd)
+        self.__fig, self.__ax = plt.subplots()
 
         self.__data = {}
         self.__title = title
+        self.__x_label = x_label
+        self.__y_label = y_label
 
-    def addPoint(self, name, color, score):
+    def addPoint(self, label, color, value):
+        if label not in self.__data:
+            self.__data[label] = { "color": color, "data": [] }
 
-        if color not in self.__data:
-            self.__data[color] = []
-            self.__title += " " + color + "/" + str(name) + "%"
+        self.__data[label]["data"].append(value)
 
-        self.__data[color].append(score)
-        plt.scatter(len(self.__data[color]) - 1, score, color=color)
+    def build(self):
+        for label, k in self.__data.items():
+            self.__ax.plot(range(len(k["data"])), k["data"], label=label, color=k["color"])
 
-    def show(self):
-        
-        plt.title(self.__title)
+        self.__ax.set_xlabel(self.__x_label)
+        self.__ax.set_ylabel(self.__y_label)
+        self.__ax.set_title(self.__title)
+        self.__ax.legend()
+
+        dateString = str(datetime.now())[0:19].replace("-", "_").replace(":", "_").replace(" ", "_") + "_"
+        self.__fig.savefig('./output/plot_' + dateString + "_" + self.__title + '.png')
+
+    def show():
         plt.show()
 
-        plt.savefig('./images/' + str(time.time()) + "_" + self.__title + '.png')
+if __name__ == "__main__":
 
+    pp = SmartPlot("Scores", "Epochs", "Ratios")
+    pp2 = SmartPlot("Gradients", "Epochs", "Loss")
+
+    pp.addPoint("Ratio 1", "red", 0)
+    pp.addPoint("Ratio 1", "red", 1)
+    pp.addPoint("Ratio 1", "red", 2)
+    pp.addPoint("Ratio 1", "red", 3)
+
+    pp.addPoint("Ratio 2", "green", 1)
+    pp.addPoint("Ratio 2", "green", 4)
+    pp.addPoint("Ratio 2", "green", 4)
+    pp.addPoint("Ratio 2", "green", 2)
+
+    pp2.addPoint("Loss", "orange", 5)
+    pp2.addPoint("Loss", "orange", 4)
+    pp2.addPoint("Loss", "orange", 3)
+    pp2.addPoint("Loss", "orange", 0)
+
+    pp.build()
+    pp2.build()
+
+    SmartPlot.show()
