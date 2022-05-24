@@ -37,6 +37,7 @@ def download():
 if __name__ == "__main__":
 
     # Programm constants
+    totalEpochs = 20
 
     step = 0.001
 
@@ -74,8 +75,8 @@ if __name__ == "__main__":
 
     todo = [ 
         # "install", 
-        #"train",
-        "test"
+        "train",
+        # "test"
         # "predict"
     ]
 
@@ -100,7 +101,7 @@ if __name__ == "__main__":
         # Step 2 : Train the model
         if "train" in todo:
             
-            cstm_train.train(step, vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn)
+            cstm_train.train(totalEpochs, step, vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn)
 
         # Step 3 : Test the model 
         if "test" in todo:

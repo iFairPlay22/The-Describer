@@ -227,7 +227,7 @@ def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_
         plot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
     
 
-def train(step, vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn):
+def train(totalEpochs, step, vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn):
 
     # Create model directory
     if not os.path.exists(output_models_path):
@@ -250,8 +250,6 @@ def train(step, vocabulary, fullModel, images_path, captions_path, output_models
 
     # Train the models
     print("\n\n==> Train the models...")
-    
-    totalEpochs = 20
 
     # Display the plot
     

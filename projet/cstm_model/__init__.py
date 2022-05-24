@@ -174,12 +174,12 @@ class FullModel(nn.Module):
 
         torch.save(
             self.__decoder_model.state_dict(), 
-            os.path.join(output_models_path, 'decoder_{dateString}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
+            os.path.join(output_models_path, 'decoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
         )
 
         torch.save(
             self.__encoder_model.state_dict(), 
-            os.path.join(output_models_path, 'encoder_{dateString}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
+            os.path.join(output_models_path, 'encoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
         )
 
     def load(self):
