@@ -1,13 +1,12 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from datetime import datetime 
+from datetime import datetime
+import os
 
 class SmartPlot:
 
     def __init__(self, title="percentage_plot", x_label="x_label", y_label="y_label"):
-
-        self.__fig, self.__ax = plt.subplots()
 
         self.__data = {}
         self.__title = title
@@ -21,6 +20,8 @@ class SmartPlot:
         self.__data[label]["data"].append(value)
 
     def build(self):
+        self.__fig, self.__ax = plt.subplots()
+
         for label, k in self.__data.items():
             self.__ax.plot(range(len(k["data"])), k["data"], label=label, color=k["color"])
 
@@ -28,6 +29,10 @@ class SmartPlot:
         self.__ax.set_ylabel(self.__y_label)
         self.__ax.set_title(self.__title)
         self.__ax.legend()
+
+        if not os.path.exists("./output"):
+            os.makedirs("./output")
+        
 
         fileName = './output/plot_' + str(datetime.now())[0:19] + "_" + self.__title 
         fileName = fileName.replace("-", "_").replace(":", "_").replace(" ", "_")
