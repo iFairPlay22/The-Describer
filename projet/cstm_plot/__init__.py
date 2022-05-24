@@ -8,8 +8,6 @@ class SmartPlot:
 
     def __init__(self, title="percentage_plot", x_label="x_label", y_label="y_label"):
 
-        self.__fig, self.__ax = plt.subplots()
-
         self.__data = {}
         self.__title = title
         self.__x_label = x_label
@@ -22,6 +20,8 @@ class SmartPlot:
         self.__data[label]["data"].append(value)
 
     def build(self):
+        self.__fig, self.__ax = plt.subplots()
+
         for label, k in self.__data.items():
             self.__ax.plot(range(len(k["data"])), k["data"], label=label, color=k["color"])
 
