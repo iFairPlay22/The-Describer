@@ -1,7 +1,8 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from datetime import datetime 
+from datetime import datetime
+import os
 
 class SmartPlot:
 
@@ -28,6 +29,10 @@ class SmartPlot:
         self.__ax.set_ylabel(self.__y_label)
         self.__ax.set_title(self.__title)
         self.__ax.legend()
+
+        if not os.path.exists("./output"):
+            os.makedirs("./output")
+        
 
         fileName = './output/plot_' + str(datetime.now())[0:19] + "_" + self.__title 
         fileName = fileName.replace("-", "_").replace(":", "_").replace(" ", "_")
