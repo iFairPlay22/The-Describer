@@ -38,6 +38,8 @@ if __name__ == "__main__":
 
     # Programm constants
 
+    step = 0.001
+
     spacyEn = download()
 
     images_path = [
@@ -98,7 +100,7 @@ if __name__ == "__main__":
         # Step 2 : Train the model
         if "train" in todo:
             
-            cstm_train.train(vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn)
+            cstm_train.train(step, vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn)
 
         # Step 3 : Test the model 
         if "test" in todo:

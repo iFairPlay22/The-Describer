@@ -227,7 +227,7 @@ def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_
         plot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
     
 
-def train(vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn):
+def train(step, vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn):
 
     # Create model directory
     if not os.path.exists(output_models_path):
@@ -246,12 +246,12 @@ def train(vocabulary, fullModel, images_path, captions_path, output_models_path,
     fullModel.train()
 
     # Optimizers
-    optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=0.001)
+    optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=step)
 
     # Train the models
     print("\n\n==> Train the models...")
     
-    totalEpochs = 5
+    totalEpochs = 20
 
     # Display the plot
     
@@ -266,7 +266,11 @@ def train(vocabulary, fullModel, images_path, captions_path, output_models_path,
 
         train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, testPlot)
 
-    # Display the plot
+        # Save the plot
+        trainPlot.build()
+        testPlot.build()
+
+    # Save the plot
     trainPlot.build()
     testPlot.build()
 
@@ -295,5 +299,8 @@ def testAll(vocabulary, fullModel, images_path, captions_path, device, transform
 
         train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, plot)
 
-    # Display the plot
+        # Save the plot
+        plot.build()
+
+    # Save the plot
     plot.build()
