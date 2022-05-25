@@ -27,3 +27,6 @@ install:
 
 	# remove the zip files
 	rm ./data_dir/*.zip
+
+clear:
+	rm -rf ./models_dir/* ./output/*
