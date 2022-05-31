@@ -3,7 +3,7 @@ import os
 from werkzeug.utils import secure_filename
 import IADecode
 import urllib.request
-
+global encoder_model, decoder_model, vocabulary, transform, device
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = "images/"
 ALLOWED_EXTENSIONS = {'png', 'jpeg',
@@ -31,7 +31,7 @@ def from_file():
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(os.path.join(path))
         # os.remove(tmp_file)
-        return {"message": IADecode.string(path)}, 200
+        return {"message": IADecode.string(path,encoder_model, decoder_model, vocabulary, transform, device)}, 200
     else :
         return "File not allowed", 400
 
@@ -63,8 +63,9 @@ def from_url():
     # Ask AI to decode image
     # Remove image
     #os.remove(savePath)
-    return {"message": IADecode.string(path)}, 200
+    return {"message": IADecode.string(path,encoder_model, decoder_model, vocabulary, transform, device)}, 200
     
 
 if __name__ == "__main__":
+    encoder_model, decoder_model, vocabulary, transform, device = IADecode.getEncoder_model()
     app.run(use_reloader=True, debug=True)
