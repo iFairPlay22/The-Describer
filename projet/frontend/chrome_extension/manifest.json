@@ -1,0 +1,11 @@
+{
+   "content_scripts": [
+    {
+      "js": ["content.js"],
+      "matches": ["*://*/*"]
+    }
+  ],
+  "manifest_version": 3,
+  "name": "The Describer",
+  "version": "1.0.0"
+}
