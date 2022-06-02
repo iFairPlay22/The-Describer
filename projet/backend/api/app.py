@@ -84,4 +84,4 @@ def from_url():
 if __name__ == "__main__":
     #encoder_model, decoder_model, vocabulary, transform, device = IADecode.getEncoder_model()
     decoder = IADecode()
-    app.run(use_reloader=True, debug=True)
+    app.run(port=80,use_reloader=True, debug=True)
