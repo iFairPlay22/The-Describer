@@ -6,3 +6,4 @@ exos/Poly3/images/*
 projet/ai/data_dir/*
 projet/ai/models_dir/*
 projet/ai/output/*
+*.ckpt
