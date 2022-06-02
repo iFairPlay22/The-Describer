@@ -33,8 +33,9 @@ def from_file():
         filename = file.filename  # secure_filename(file.filename)
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(os.path.join(path))
+        prediction = decoder.getPrediction(path)
         os.remove(path)
-        return {"message": decoder.getPrediction(path)}, 200
+        return {"message": prediction}, 200
     else:
         return "File not allowed", 400
 
@@ -65,8 +66,9 @@ def from_url():
 
     # Ask AI to decode image
     # Remove image
+    predicrtion = decoder.getPrediction(savePath)
     os.remove(savePath)
-    return {"message": decoder.getPrediction(savePath)}, 200
+    return {"message": predicrtion}, 200
 
 
 if __name__ == "__main__":
