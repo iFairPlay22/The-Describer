@@ -13,11 +13,19 @@ var getAltBalise = async (image) => {
     redirect: "follow",
   };
   
-  return fetch("http://127.0.0.1:5000/iadecode/from_url", requestOptions)
+  fetch("http://127.0.0.1:5000/iadecode/from_url", requestOptions)
     .then((response) => {
-      return response.json();
+      if(response.status == 200){
+        return response.json();
+      }
+      console.log(response)
+      return null
     })
     .then((result) => {
+      if(result == null){
+        console.log("result null")
+        return "";
+      }
       let msg = result.message;
       image.alt = msg;
       if(image.title == "" || image.title == null) {
@@ -25,7 +33,10 @@ var getAltBalise = async (image) => {
       }
       return result;
     })
-    .catch((error) => console.log("error", error));
+    .catch((error) => {
+      console.log("erreur 400")
+      console.log("error", error)}
+    );
 };
 
 if(chrome.storage.sync.get('describer_enabled', function(data) {
@@ -34,8 +45,10 @@ if(chrome.storage.sync.get('describer_enabled', function(data) {
     for (var i = 0, l = images.length; i < l; i++) {
       //if alt is null or empty
       if (images[i].alt == "" || images[i].alt == null){
+        console.log(i);
         getAltBalise(images[i]);
       }
+      console.log(i + images[i].alt);
     }
   }
 }));
