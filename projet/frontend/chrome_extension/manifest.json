@@ -7,5 +7,12 @@
   ],
   "manifest_version": 3,
   "name": "The Describer",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "action": {
+    "default_icon": { 
+      "16": "images/bb9e.png"
+    },
+    "default_title": "A propos",
+    "default_popup": "popup.html"
+  }
 }
