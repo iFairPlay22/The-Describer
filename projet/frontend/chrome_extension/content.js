@@ -18,16 +18,24 @@ var getAltBalise = async (image) => {
       return response.json();
     })
     .then((result) => {
-      image.alt = result.message;
+      let msg = result.message;
+      image.alt = msg;
+      if(image.title == "" || image.title == null) {
+        image.title = msg;
+      }
       return result;
     })
     .catch((error) => console.log("error", error));
 };
 
-var images = document.getElementsByTagName("img");
-for (var i = 0, l = images.length; i < l; i++) {
-  //if alt is null or empty
-  if (images[i].alt == "" || images[i].alt == null){
-    getAltBalise(images[i]);
+if(chrome.storage.sync.get('describer_enabled', function(data) {
+  if(data.describer_enabled) {
+    var images = document.getElementsByTagName("img");
+    for (var i = 0, l = images.length; i < l; i++) {
+      //if alt is null or empty
+      if (images[i].alt == "" || images[i].alt == null){
+        getAltBalise(images[i]);
+      }
+    }
   }
-}
+}));

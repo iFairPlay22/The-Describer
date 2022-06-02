@@ -14,5 +14,10 @@
     },
     "default_title": "A propos",
     "default_popup": "popup.html"
-  }
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting"
+  ]
 }
