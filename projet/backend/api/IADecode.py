@@ -16,7 +16,6 @@ class IADecode:
         self.device = torch.device(
             'cuda' if torch.cuda.is_available() else 'cpu')
         self.vocabulary = Vocab.load(self.output_vocabulary_path)
-        self.translator = Translator()
         self.transform = transforms.Compose([
             transforms.RandomCrop(224),
             transforms.RandomHorizontalFlip(),
