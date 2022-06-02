@@ -1,7 +1,7 @@
-var getAltBalise = async (src) => {
+var getAltBalise = async (image) => {
   var myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
-
+  let src = image.src
   var raw = JSON.stringify({
     file: src,
   });
@@ -12,15 +12,22 @@ var getAltBalise = async (src) => {
     body: raw,
     redirect: "follow",
   };
-  fetch("http://192.168.1.25:5000/iadecode/from_url", requestOptions)
-    .then((response) => console.log(response.text()))
-    .then((result) => console.log(result))
+  
+  return fetch("http://127.0.0.1:5000/iadecode/from_url", requestOptions)
+    .then((response) => {
+      return response.json();
+    })
+    .then((result) => {
+      image.alt = result.message;
+      return result;
+    })
     .catch((error) => console.log("error", error));
 };
 
 var images = document.getElementsByTagName("img");
 for (var i = 0, l = images.length; i < l; i++) {
   //if alt is null or empty
-  if (images[i].alt == "" || images[i].alt == null)
-    images[i].alt = getAltBalise(images[i].src);
+  if (images[i].alt == "" || images[i].alt == null){
+    getAltBalise(images[i]);
+  }
 }
