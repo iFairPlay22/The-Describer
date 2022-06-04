@@ -1,0 +1,67 @@
+body {
+    font-family: "roboto";
+}
+
+#body {
+    padding: 20px;
+}
+
+.title {
+    font-weight: bold;
+    font-size: 27px;
+    color: #f23869;
+}
+
+.subtitle {
+    font-size: 20px;
+    color: #f23869;
+}
+
+.text {
+    text-align: justify;
+    font-size: 15px;
+    padding: 10px 0px;
+}
+
+.without-borders {
+    border: none !important;
+    -webkit-box-shadow: none !important;
+	-moz-box-shadow: none !important;
+	box-shadow: none !important;
+}
+
+.small-margin {
+    margin: 10px;
+}
+
+.merge-cards-right {
+    margin-top : 50px;
+    margin-left: -6px;
+    z-index: 2;
+    position: relative;
+}
+
+.merge-cards-left {
+    margin-bottom: 50px;
+    margin-right: -6px;
+}
+
+.rounded-borders-except-tr {
+    border-radius: 15px 0 15px 15px;
+}
+
+.rounded-borders-except-bl {
+    border-radius: 15px 15px 15px 0;
+}
+
+.big-home-image {
+    border: 10px solid black;
+    border-radius: 15px 2px 2px 15px;
+    /* border-right: none; */
+    height: 300px;
+}
+
+.big-home-image-container {
+    margin-left: -30px;
+    position: sticky;
+}

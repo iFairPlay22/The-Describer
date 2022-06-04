@@ -194,9 +194,11 @@ class FullModel(nn.Module):
                 decoderFile = filename
             if(filename.startswith('encoder')):
                 encoderFile = filename
-        
-        self.__encoder_model.load_state_dict(torch.load('models_dir/' + encoderFile))
-        self.__decoder_model.load_state_dict(torch.load('models_dir/' + decoderFile))
+
+        if encoderFile and decoderFile:
+            self.__encoder_model.load_state_dict(torch.load('models_dir/' + encoderFile))
+            self.__decoder_model.load_state_dict(torch.load('models_dir/' + decoderFile))
+            print("\n\n==> Loaded models from {} and {}".format(encoderFile, decoderFile))
 
 
     def trainMode(self):

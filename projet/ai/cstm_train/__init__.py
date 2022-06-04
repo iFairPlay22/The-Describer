@@ -241,8 +241,8 @@ def train(totalEpochs, step, vocabulary, fullModel, images_path, captions_path, 
     custom_training_data_loader = get_loader(images_path[0]["output"], captions_path[0], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
     training_total_num_steps = len(custom_training_data_loader) // batch_size
     
-    custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
-    testing_total_num_steps = len(custom_testing_data_loader) // batch_size
+    # custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+    # testing_total_num_steps = len(custom_testing_data_loader) // batch_size
 
     # Train the models
     fullModel.train()
@@ -267,7 +267,7 @@ def train(totalEpochs, step, vocabulary, fullModel, images_path, captions_path, 
         # Save the plot
         learnPlot.build()
 
-        train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, testPlot)
+        # train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, testPlot)
 
         # Save the plot
         testPlot.build()

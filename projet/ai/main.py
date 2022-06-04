@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # Programm constants
     totalEpochs = 20
 
-    step = 0.001
+    step = 0.0001
 
     spacyEn = download()
 
@@ -98,6 +98,9 @@ if __name__ == "__main__":
         # Get the models
         fullModel = cstm_model.FullModel(device, image_shape, vocabulary)
 
+        # Load the weights of the previous training
+        fullModel.load()
+
         # Step 2 : Train the model
         if "train" in todo:
             
@@ -106,16 +109,10 @@ if __name__ == "__main__":
         # Step 3 : Test the model 
         if "test" in todo:
 
-            # Load the weights of the previous training
-            fullModel.load()
-
             cstm_train.testAll(vocabulary, fullModel, images_path, captions_path, device, transform, spacyEn)
 
         # Step 3 : Test the model 
         if "predict" in todo:
-
-            # Load the weights of the previous training
-            fullModel.load()
 
             # Prepare an image
             img_tensor = cstm_load.load_image(input_image_to_test_path, device, transform)
