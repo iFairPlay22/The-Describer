@@ -4,12 +4,28 @@
     <title>Chrome Extension</title>
     <link rel="stylesheet" href="style.css">
 </html>
-<body>
-    <div>
-        <h1>The Describer</h1>
-        <label class="switch">
-            <input type="checkbox">
-            <span class="slider round"></span>
-        </label>
-    </div>
-</body>
+    <body>
+        <div id="container">
+            <div style="width:20em;height: 5em;">
+                <h1>The Describer</h1>
+            </div>
+            <div >
+                <label class="switch">
+                    <input type="checkbox" id="slider">
+                    <span class="slider round"></span>
+                </label><br>
+                <button type="submit" id="refreshButton" style="display: none">Actualiser</button>
+            </div>
+        </div>
+        <div>
+            <p>Made by :</p>
+            <ul type="circle">
+                <li>Fabien Courtois</li>
+                <li>Lucas Billard</li>
+                <li>Ewen Bouquet</li>
+                <li>Loic Fournier</li>
+            </ul>
+        </div>
+        <script src="popup.js"></script>
+    </body>
+</html>

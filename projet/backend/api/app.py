@@ -1,5 +1,7 @@
 from flask import Flask, request, redirect, url_for
 import os
+import time
+from datetime import datetime
 from werkzeug.utils import secure_filename
 from IADecode import IADecode
 import urllib.request
@@ -33,8 +35,9 @@ def from_file():
         filename = file.filename  # secure_filename(file.filename)
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(os.path.join(path))
+        prediction = decoder.getPrediction(path)
         os.remove(path)
-        return {"message": decoder.getPrediction(path)}, 200
+        return {"message": prediction}, 200
     else:
         return "File not allowed", 400
 
@@ -48,14 +51,22 @@ def from_url():
     payload = request.get_json()
     path = payload['file']
     print("eee")
-    fileName = os.path.basename(path)
-    extension = os.path.splitext(path)[1]
+    extension = os.path.splitext(path)[1].split("?")[0]
+    if extension == ".svg":
+        return "SVG not supported", 400 
     validExtensions = ['.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.webp']
     print("tot")
     # if(extension not in validExtensions):
     #     return "File not allowed", 400
 
     # Download image
+    fileName = str(round(time.time() * 1000))
+    fileName = fileName.replace("-", "").replace(":", "").replace(" ", "_")
+    if extension != "" and extension != None:
+        fileName = fileName + extension
+    else:
+        fileName = fileName + ".jpg"
+    #fileName = os.path.basename(path)
     savePath = os.path.join(app.config['UPLOAD_FOLDER'], fileName)
     opener = urllib.request.build_opener()
     opener.addheaders = [
@@ -65,11 +76,12 @@ def from_url():
 
     # Ask AI to decode image
     # Remove image
+    predicrtion = decoder.getPrediction(savePath)
     os.remove(savePath)
-    return {"message": decoder.getPrediction(savePath)}, 200
+    return {"message": predicrtion}, 200
 
 
 if __name__ == "__main__":
     #encoder_model, decoder_model, vocabulary, transform, device = IADecode.getEncoder_model()
     decoder = IADecode()
-    app.run(use_reloader=True, debug=True)
+    app.run(host='0.0.0.0', port=80,use_reloader=True, debug=True)

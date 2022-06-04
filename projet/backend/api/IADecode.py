@@ -3,7 +3,7 @@ import cstm_load as cstm_load
 import cstm_predict as cstm_predict
 import cstm_model as cstm_model
 import time
-
+from google_trans_new import google_translator
 import torch
 from torchvision import transforms
 import torchvision.transforms as transforms
@@ -25,6 +25,7 @@ class IADecode:
                 (0.229, 0.224, 0.225)
             )
         ])
+        self.translator = google_translator()
 
         self.fullModel = cstm_model.FullModel(
             self.device, self.image_shape, self.vocabulary)
@@ -48,11 +49,10 @@ class IADecode:
         predicted_sentence = predicted_sentence['words'][0]
         predicted_sentence = predicted_sentence.replace('<start> ', '')
         predicted_sentence = predicted_sentence.replace('<end>', '')
-
-        #predicted_sentence = self.trans.translate("Hello user", src='en', dest='fr')
-
-        # while(predicted_sentence.contains('  ')):
-        #     predicted_sentence= predicted_sentence.replace('  ',' ')
+        duration2 = time.time() - start
+        print(predicted_sentence)
+        predicted_sentence = self.translator.translate(
+            predicted_sentence, lang_src='en', lang_tgt='fr')
         duration = time.time() - start
-        print("Time taken: " + str(duration))
+        print("Time taken: " + str(duration) + "  "+str(duration2))
         return predicted_sentence

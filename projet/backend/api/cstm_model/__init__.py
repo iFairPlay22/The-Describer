@@ -140,7 +140,7 @@ class FullModel(nn.Module):
         # Build the models
         self.__encoder_model = CNNModel(image_shape[0]).to(device)
         self.__decoder_model = LSTMModel(image_shape[0], image_shape[0] + image_shape[1], len(vocabulary), 1).to(device)        
-            
+        self.device = device
         # Loss and optimizer
         self.__loss_criterion = nn.CrossEntropyLoss()
 
@@ -195,8 +195,8 @@ class FullModel(nn.Module):
             if(filename.startswith('encoder')):
                 encoderFile = filename
         
-        self.__encoder_model.load_state_dict(torch.load('models_dir/' + encoderFile))
-        self.__decoder_model.load_state_dict(torch.load('models_dir/' + decoderFile))
+        self.__encoder_model.load_state_dict(torch.load('models_dir/' + encoderFile, map_location = self.device))
+        self.__decoder_model.load_state_dict(torch.load('models_dir/' + decoderFile, map_location = self.device))
 
 
     def trainMode(self):
