@@ -23,6 +23,35 @@ body {
     font-size: 30px !important;
 }
 
+@media (max-width: 350px) {
+    .xs-disable {
+        display: none !important;
+    }
+
+    .el-card__body, .el-main {
+        padding: 5px;
+    }
+}
+
+@media (max-width: 635px) {
+    
+    #body {
+        padding: 5px !important;
+    }
+
+    .big-title {
+        font-size: 25px !important;
+    }
+    
+    .title {
+        font-size: 17px !important;
+    }
+    
+    .big-text {
+        font-size: 20px !important;
+    }
+}
+
 .subtitle {
     font-size: 20px !important;
     color: #f23869 !important;
@@ -86,6 +115,18 @@ body {
     z-index: 2 !important;
 }
 
+@media (max-width: 770px) {
+    .merge-cards-right {
+        margin : initial !important;
+        margin-top: 5px !important;
+    }
+    
+    .merge-cards-left {
+        margin: initial !important;
+        margin-bottom: 5px !important;
+    }
+}
+
 .rounded-borders-except-tr {
     border-radius: 15px 0 15px 15px !important;
 }
@@ -98,6 +139,7 @@ body {
     border: 10px solid black !important;
     border-radius: 15px 2px 2px 15px !important;
     max-height: 425px !important;
+    margin-top: 15px !important;
 }
 
 .small-image-container {
@@ -106,6 +148,12 @@ body {
     justify-content: start !important;
     align-items: center !important;
     flex-wrap: wrap !important;
+}
+
+@media (max-width: 1000px) {
+    .small-image-container {
+        justify-content: space-around !important;
+    }
 }
 
 .small-image {
@@ -131,12 +179,30 @@ body {
     margin-right: 25px !important;
 }
 
+@media (max-width: 1000px) {
+    .merge-container-left {
+        margin-left: initial !important;
+        margin-right: initial !important;
+    }
+    
+    .merge-container-right {
+        margin-left: initial !important;
+        margin-right: initial !important;
+    }
+}
+
 .button-bar {
     display: flex !important;
     flex-direction: row !important;
     justify-content: start !important;
     align-items: center !important;
     flex-wrap: wrap !important;
+}
+
+@media (max-width: 635px) {
+    .button-bar {
+        justify-content: center !important;
+    }
 }
 
 .text-center {

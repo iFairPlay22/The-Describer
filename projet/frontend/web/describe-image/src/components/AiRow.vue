@@ -1,6 +1,6 @@
 <template>
     <el-row class="normal-y-margin">
-        <el-col :span="12">
+        <el-col :md="12" :span="24">
             <el-row>
                 <el-col :span="24">
                     <cite class="text-center small-y-margin"> 
@@ -21,7 +21,7 @@
             </el-row>
         </el-col>
 
-        <el-col :span="12">
+        <el-col :md="12" :span="24">
             <el-row>
                 <el-col :span="24">
                     <el-card class="without-borders">
@@ -39,13 +39,13 @@
                                 :file-list="uploadedFiles"
                                 :on-change="updateDescriptionByFile"
                             >
-                                <el-button type="primary" class="very-small-x-margin">
+                                <el-button type="primary" class="very-small-margin">
                                     <i class="el-icon-upload"></i>
                                     Uploader une image
                                 </el-button>
                             </el-upload>
 
-                            <el-button type="primary" @click="generateRandomImages" class="very-small-x-margin">
+                            <el-button type="primary" @click="generateRandomImages" class="very-small-margin">
                                 <i class="el-icon-plus"></i>
                                 Charger d'autres images
                             </el-button>
@@ -84,8 +84,8 @@ export default {
       currentDescription: "un homme chevauchant une planche de surf sur une vague dans l'océan.",
       proposedImageProperties: {
           total: 6,
-          width: 175,
-          height: 125
+          width: 200,
+          height: 150
       },
       proposedImages: [],
       uploadedFiles: []

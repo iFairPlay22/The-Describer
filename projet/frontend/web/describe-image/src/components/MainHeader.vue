@@ -4,7 +4,7 @@
         <el-menu-item class="text-important" style="margin-top: 1px">
             The Describers
         </el-menu-item>
-        <el-menu-item v-for="({ name, id }, i) in links" :key="i">
+        <el-menu-item v-for="({ name, id }, i) in links" :key="i" class="xs-disable">
             <el-link type="primary"> 
                 <div @click="goToLink(id)">
                     {{ name }} 

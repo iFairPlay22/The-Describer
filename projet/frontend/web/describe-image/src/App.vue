@@ -10,7 +10,7 @@
       <description-row/>
       <big-text
         id="ai"
-        text="L'intelligence artificielle"
+        text="Notre IA"
       />
       <ai-row/>
       <hr>
