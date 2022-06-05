@@ -1,33 +1,33 @@
 body {
-    font-family: "roboto";
+    font-family: "roboto" !important;
 }
 
 #body {
-    padding: 20px;
+    padding: 20px !important;
 }
 
 .big-title, .title, .text-important {
-    font-weight: bold;
+    font-weight: bold !important;
     color: #f23869 !important;
 }
 
 .big-title {
-    font-size: 35px;
+    font-size: 35px !important;
 }
 
 .title {
-    font-size: 27px;
+    font-size: 27px !important;
 }
 
 .subtitle {
-    font-size: 20px;
-    color: #f23869;
+    font-size: 20px !important;
+    color: #f23869 !important;
 }
 
 .text {
-    text-align: justify;
-    font-size: 15px;
-    padding: 10px 0px;
+    text-align: justify !important;
+    font-size: 15px !important;
+    padding: 10px 0px !important;
 }
 
 .without-borders {
@@ -62,16 +62,16 @@ body {
 }
 
 .merge-cards-right {
-    margin-top : 50px;
-    margin-left: -6px;
-    z-index: 2;
-    position: relative;
+    margin-top : 50px !important;
+    margin-left: -6px !important;
+    z-index: 2 !important;
+    position: relative !important;
 }
 
 .merge-cards-left {
-    margin-bottom: 50px;
-    margin-right: -6px;
-    z-index: 2;
+    margin-bottom: 50px !important;
+    margin-right: -6px !important;
+    z-index: 2 !important;
 }
 
 .rounded-borders-except-tr {
@@ -83,46 +83,46 @@ body {
 }
 
 .big-home-image {
-    border: 10px solid black;
+    border: 10px solid black !important;
     border-radius: 15px 2px 2px 15px !important;
-    max-height: 425px;
+    max-height: 425px !important;
 }
 
 .small-image-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: start;
-    align-items: center;
-    flex-wrap: wrap;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: start !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
 }
 
 .small-image {
-    border: .5px solid black;
-    border-radius: 2px;
-    margin: 5px;
-    transition: all .2s ease-in-out;
-    cursor: pointer;
+    border: .5px solid black !important;
+    border-radius: 2px !important;
+    margin: 5px !important;
+    transition: all .2s ease-in-out !important;
+    cursor: pointer !important;
 }
 
 .small-image:hover {
-    box-shadow: 0 0 5px black; 
-    transform: scale(1.05);
+    box-shadow: 0 0 5px black !important; 
+    transform: scale(1.05) !important;
 }
 
 .merge-container-left {
-    margin-left: 25px;
-    margin-right: -25px;
+    margin-left: 25px !important;
+    margin-right: -25px !important;
 }
 
 .merge-container-right {
-    margin-left: -25px;
-    margin-right: 25px;
+    margin-left: -25px !important;
+    margin-right: 25px !important;
 }
 
 .button-bar {
-    display: flex;
-    flex-direction: row;
-    justify-content: start;
-    align-items: center;
-    flex-wrap: wrap;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: start !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
 }

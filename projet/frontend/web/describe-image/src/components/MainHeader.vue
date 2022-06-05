@@ -4,8 +4,12 @@
         <el-menu-item class="text-important" style="margin-top: 1px">
             The Describers
         </el-menu-item>
-        <el-menu-item v-for="({ name, url }, i) in links" :key="i">
-            <el-link type="primary" :href="url" target="_blank"> {{ name }} </el-link>
+        <el-menu-item v-for="({ name, id }, i) in links" :key="i">
+            <el-link type="primary"> 
+                <div @click="goToLink(id)">
+                    {{ name }} 
+                </div>
+            </el-link>
         </el-menu-item>
     </el-menu>
 </header>
@@ -18,14 +22,20 @@ export default {
         return {
             links: [
                 {
-                    name: "Processing Center",
-                    url: "/"
+                    name: "Origine",
+                    id: "what"
                 },
                 {
-                    name: "Orders",
-                    url: "https://www.ele.me"
+                    name: "L'IA",
+                    id: "ai"
                 }
             ]
+        }
+    },
+    methods: {
+        goToLink(id) {
+            const el = document.getElementById(id);
+            el.scrollIntoView({ behavior: "smooth" });
         }
     },
 }

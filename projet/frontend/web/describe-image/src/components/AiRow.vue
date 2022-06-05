@@ -156,7 +156,9 @@ export default {
                     if (response.status == 200)
                         response.json().then(({ message }) => this.currentDescription = message);
                 })
-                .catch(error => console.log('error', error));
+                .catch(() => {
+                    this.$message.error({ message: 'Une erreur inatendue est survenue! 👀', center: true, showClose: true, duration: 10000 });
+                });
         }
   },
 }
