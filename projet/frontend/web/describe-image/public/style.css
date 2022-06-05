@@ -19,6 +19,10 @@ body {
     font-size: 27px !important;
 }
 
+.big-text {
+    font-size: 30px !important;
+}
+
 .subtitle {
     font-size: 20px !important;
     color: #f23869 !important;
@@ -47,6 +51,14 @@ body {
 
 .very-small-x-margin {
     margin: 0 2px !important;
+}
+
+.small-y-margin {
+    margin: 10px 0 !important;
+}
+
+.small-x-margin {
+    margin: 0 10px !important;
 }
 
 .small-margin {
@@ -97,7 +109,7 @@ body {
 }
 
 .small-image {
-    border: .5px solid black !important;
+    /* border: .5px solid black !important; */
     border-radius: 2px !important;
     margin: 5px !important;
     transition: all .2s ease-in-out !important;
@@ -125,4 +137,12 @@ body {
     justify-content: start !important;
     align-items: center !important;
     flex-wrap: wrap !important;
+}
+
+.text-center {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center !important;
 }

@@ -3,16 +3,20 @@
         <el-col :span="12">
             <el-row>
                 <el-col :span="24">
+                    <cite class="text-center small-y-margin"> 
+                        <el-icon class="el-icon-d-arrow-left small-x-margin"/>
+                        <span class="big-text"> {{ formattedCurrentDescription }} </span>
+                        <el-icon class="el-icon-d-arrow-right small-x-margin"/>
+                    </cite>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="24">
                     <el-image
                         class="big-home-image"
                         :src="currentImage"
                         fit="cover">
                     </el-image>
-                </el-col>
-            </el-row>
-            <el-row>
-                <el-col :span="24">
-                    <cite> {{ currentDescription }} </cite>
                 </el-col>
             </el-row>
         </el-col>
@@ -35,7 +39,7 @@
                                 :file-list="uploadedFiles"
                                 :on-change="updateDescriptionByFile"
                             >
-                                <el-button type="primary" @click="uploadImage" class="very-small-x-margin">
+                                <el-button type="primary" class="very-small-x-margin">
                                     <i class="el-icon-upload"></i>
                                     Uploader une image
                                 </el-button>
@@ -77,7 +81,7 @@ export default {
   data() {
     return {
       currentImage: "https://havingfun.fr/wp-content/uploads/2017/05/surf-wallpaper-3.jpg",
-      currentDescription: "Phrase correspondant à une traduction d'image",
+      currentDescription: "un homme chevauchant une planche de surf sur une vague dans l'océan.",
       proposedImageProperties: {
           total: 6,
           width: 175,
@@ -90,10 +94,15 @@ export default {
   created() {
     this.generateRandomImages();
   },
+  computed: {
+      formattedCurrentDescription() {
+        if (!this.currentDescription)
+            return "";
+
+        return this.currentDescription.charAt(0).toUpperCase() + this.currentDescription.slice(1);
+      }
+  },
   methods: {
-        uploadImage() {
-            
-        },
         generateRandomImages() {
             let imgs = [];
             
@@ -110,7 +119,7 @@ export default {
         },
         updateImage(image) {
             this.currentImage = image;
-            this.currentDescription = "Processing ...";
+            this.currentDescription = "Traitement en cours ...";
         },
         updateDescriptionByUrl(url) {
             
@@ -135,8 +144,8 @@ export default {
             if (!image) return
             image = image.raw
             this.uploadedFiles = [];
-
-            this.updateImage(image);
+            
+            this.updateImage(URL.createObjectURL(image));
 
             var formdata = new FormData();
             formdata.append("file", image);
@@ -153,11 +162,20 @@ export default {
           
             fetch(url, options)
                 .then(response => {
-                    if (response.status == 200)
-                        response.json().then(({ message }) => this.currentDescription = message);
+                    if (response.status == 200) {
+                        response.json()
+                            .then(({ message }) => {
+                                this.currentDescription = message;    
+                                this.$message.success({ message: "Description effectuée avec succès : \"" + this.formattedCurrentDescription + "\".", center: true, showClose: true, duration: 10000 });
+                            })
+                            .catch(() => {
+                                this.$message.success({ message: "Format de fichiers non pris en charge...", center: true, showClose: true, duration: 10000 });
+                                this.currentDescription = "Une erreur est survenue...";
+                            });
+                    }
                 })
                 .catch(() => {
-                    this.$message.error({ message: 'Une erreur inatendue est survenue! 👀', center: true, showClose: true, duration: 10000 });
+                    this.$message.error({ message: 'Une erreur inattendue est survenue ! 👀', center: true, showClose: true, duration: 10000 });
                 });
         }
   },
