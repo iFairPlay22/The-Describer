@@ -49,8 +49,9 @@ def from_file():
 @app.route('/iadecode/from_url', methods=['POST'])
 def from_url():
     payload = request.get_json()
+    
     path = payload['file']
-    print("eee")
+    
     extension = os.path.splitext(path)[1].split("?")[0]
     if extension == ".svg":
         return "SVG not supported", 400 

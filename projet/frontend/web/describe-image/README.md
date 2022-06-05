@@ -1,4 +1,4 @@
-# describe-image
+# The Describers
 
 ## Project setup
 ```

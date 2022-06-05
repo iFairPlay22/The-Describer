@@ -151,7 +151,8 @@ def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch
         loss    = fullModel.loss(outputs, tgts)
         allLoss.append(loss.item())
 
-        loss.backward()
+        
+        .backward()
         optimizer.step()
 
         batchNb += 1

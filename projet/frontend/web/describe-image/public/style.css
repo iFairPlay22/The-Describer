@@ -6,10 +6,17 @@ body {
     padding: 20px;
 }
 
-.title {
+.big-title, .title, .text-important {
     font-weight: bold;
+    color: #f23869 !important;
+}
+
+.big-title {
+    font-size: 35px;
+}
+
+.title {
     font-size: 27px;
-    color: #f23869;
 }
 
 .subtitle {
@@ -30,8 +37,28 @@ body {
 	box-shadow: none !important;
 }
 
+.very-small-margin {
+    margin: 2px !important;
+}
+
+.very-small-y-margin {
+    margin: 0 2px !important;
+}
+
+.very-small-x-margin {
+    margin: 0 2px !important;
+}
+
 .small-margin {
-    margin: 10px;
+    margin: 10px !important;
+}
+
+.normal-y-margin {
+    margin: 15px 0 !important;
+}
+
+.normal-x-margin {
+    margin: 0 15px !important;
 }
 
 .merge-cards-right {
@@ -44,24 +71,58 @@ body {
 .merge-cards-left {
     margin-bottom: 50px;
     margin-right: -6px;
+    z-index: 2;
 }
 
 .rounded-borders-except-tr {
-    border-radius: 15px 0 15px 15px;
+    border-radius: 15px 0 15px 15px !important;
 }
 
 .rounded-borders-except-bl {
-    border-radius: 15px 15px 15px 0;
+    border-radius: 15px 15px 15px 0 !important;
 }
 
 .big-home-image {
     border: 10px solid black;
-    border-radius: 15px 2px 2px 15px;
-    /* border-right: none; */
-    height: 300px;
+    border-radius: 15px 2px 2px 15px !important;
+    max-height: 425px;
 }
 
-.big-home-image-container {
-    margin-left: -30px;
-    position: sticky;
+.small-image-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.small-image {
+    border: .5px solid black;
+    border-radius: 2px;
+    margin: 5px;
+    transition: all .2s ease-in-out;
+    cursor: pointer;
+}
+
+.small-image:hover {
+    box-shadow: 0 0 5px black; 
+    transform: scale(1.05);
+}
+
+.merge-container-left {
+    margin-left: 25px;
+    margin-right: -25px;
+}
+
+.merge-container-right {
+    margin-left: -25px;
+    margin-right: 25px;
+}
+
+.button-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    flex-wrap: wrap;
 }
