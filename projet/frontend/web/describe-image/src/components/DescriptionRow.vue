@@ -4,8 +4,8 @@
             <el-row style="margin: 20px 0">
                 <el-col :span="24">
                     <el-card class="without-borders">
-                    <div class="title">Ecosystème d'aide aux<br/> personnes mal-voyantes</div>
-                    <div class="text">Un projet innovant pour un monde meilleur</div>
+                        <div class="title">{{ data.title }}</div>
+                        <div class="text">{{ data.text }}</div>
                     </el-card>
                 </el-col>
             </el-row>
@@ -14,14 +14,14 @@
                     <el-row>
                         <el-col :xs="24" :sm="12">
                             <el-card class="rounded-borders-except-bl small-margin merge-cards-left">
-                                <div class="title">Projet</div>
-                                <div class="text">Création d'une intelligence artificielle capable de décrire des images</div>
+                                <div class="title">{{ data.groups[0].title }}</div>
+                                <div class="text">{{ data.groups[0].text }}</div>
                             </el-card>
                         </el-col>
                         <el-col :xs="24" :sm="12">
                             <el-card class="rounded-borders-except-tr small-margin merge-cards-right">
-                                <div class="title">Objectif</div>
-                                <div class="text">Obtenir plus facilement la description d'image sur nos outils numériques</div>
+                                <div class="title">{{ data.groups[1].title }}</div>
+                                <div class="text">{{ data.groups[1].text }}</div>
                             </el-card>
                         </el-col>
                     </el-row>
@@ -31,7 +31,7 @@
         <el-col :xs="24" :sm="12" class="merge-container-right">
             <el-image
                 class="big-home-image"
-                :src="url"
+                :src="data.image"
                 fit="cover">
             </el-image>
         </el-col>
@@ -40,13 +40,29 @@
 
 <script>
 export default {
+  name: "DescriptionRow",
   props: {
-  },
-    name: "DescriptionRow",
-  data() {
-    return {
-      url: "https://voyage-onirique.com/wp-content/uploads/2021/10/2651.jpg"
-    }
+      data: {
+          title: {
+            type: String,
+            default: "",
+         },
+          text: {
+            type: String,
+            default: "",
+         },
+          image: {
+            type: String,
+            default: "",
+         },
+          groups: {
+            type: Array,
+            default: [ 
+                { title: "", text: "" },
+                { title: "", text: "" }
+            ],
+         },
+      }
   }
 }
 </script>

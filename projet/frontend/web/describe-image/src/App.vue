@@ -1,19 +1,14 @@
 <template>
   <div id="app">
-    <main-header/>
+    <main-header :data="headerData"/>
     
     <div id="body">
-      <big-text
-        id="what"
-        text="Origine & Contexte"
-      />
-      <description-row/>
-      <big-text
-        id="ai"
-        text="Notre IA"
-      />
-      <ai-row/>
-      <hr>
+      <big-text :data="title1Data"/>
+      <description-row :data="descriptionData"/>
+      <big-text :data="title2Data"/>
+      <ai-row :data="aiData"/>
+      <big-text :data="title3Data"/>
+      <services-row :data="servicesData"/>
     </div>
   </div>
 </template>
@@ -23,10 +18,105 @@
 import MainHeader from './components/MainHeader.vue';
 import DescriptionRow from './components/DescriptionRow.vue';
 import AiRow from './components/AiRow.vue';
+import ServicesRow from './components/ServicesRow.vue';
 import BigText from './components/BigText.vue';
 
 export default {
   name: 'App',
-  components: { MainHeader, DescriptionRow, AiRow, BigText }
+  components: { MainHeader, DescriptionRow, AiRow, ServicesRow, BigText },
+  data() {
+    return {
+      headerData: {
+          name: "The Describers",
+          links: [
+              {
+                  name: "Origine",
+                  id: "what"
+              },
+              {
+                  name: "L'IA",
+                  id: "ai"
+              },
+              {
+                  name: "Services",
+                  id: "services"
+              }
+          ]
+      },
+      title1Data: {
+        id: "what",
+        text: "Origine & Contexte",
+      },
+      descriptionData: {
+        title: "Ecosystème d'aide aux personnes mal-voyantes",
+        text: "Un projet innovant pour un monde meilleur",
+        image: "/images/big/big_cat.jpg",
+        groups: [
+            {
+              title: "Projet",
+              text: "Création d'une intelligence artificielle capable de décrire des images"
+            },
+            {
+              title: "Objectif",
+              text: "Obtenir plus facilement la description d'image sur nos outils numériques"
+            }
+        ],
+      },
+      title2Data: {
+        id: "ai",
+        text: "Notre IA",
+      },
+      aiData: {
+        strings: {
+          title: "Comment ça marche ?",
+          text: "Sélectionnez une des images ci-dessous pour obtenir la traduction associée. Vous pouvez aussi uploader vos images personnalisées en cliquant sur l'image de droite.",
+          uploadButtonText: "Uploader une image",
+          reloadButtonText: "Charger d'autres images",
+          processingText: "Traitement en cours ...",    
+          errorText: "Une erreur est survenue...",
+          alerts: {
+              successMessage: "Description effectuée avec succès !",
+              badFileFormatMessage: "Format de fichiers non pris en charge...",
+              errorMessage: 'Une erreur inattendue est survenue ! 👀'
+          }
+        },
+        proposedImageProperties: {
+            total: 6,
+            width: 200,
+            height: 150
+        },
+        backendApi: "http://217.160.10.8:80"
+      },
+      title3Data: {
+        id: "services",
+        text: "Nos services",
+      },
+      servicesData: {
+        services: [
+          {
+            avatar: "/images/logos/mobile_app_logo.png",
+            title: "Application mobile",
+            description: "Prennez des photos, et obtienez la description ! Disponible sur Android & IOS ! ✨",
+            button: "Télécharger",
+            callback: () => { window.open("/downloads/the_describers_app.zip", '_blank') }
+          },
+          {
+            avatar: "/images/logos/discord_logo.png",
+            title: "Bot Discord",
+            description: "Notre IA, directement accessible sur vos serveurs ! 💕",
+            button: "Télécharger",
+            callback: () => { window.open("https://discord.com/api/oauth2/authorize?client_id=978558654427041802&permissions=2048&scope=bot", '_blank') }
+          },
+          {
+            avatar: "/images/logos/chrome_logo.png",
+            title: "Extension Chrome",
+            description: "Décrit automatiquement les images sur votre navigateur ! 👀",
+            button: "Télécharger",
+            callback: () => { window.open("/downloads/the_describers_chrome_ext.zip", '_blank') }
+          }
+        ]
+      }
+    };
+  },
 }
 </script>

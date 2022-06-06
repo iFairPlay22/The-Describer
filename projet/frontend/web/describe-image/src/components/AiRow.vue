@@ -25,11 +25,8 @@
             <el-row>
                 <el-col :span="24">
                     <el-card class="without-borders">
-                        <div class="title">Comment ça marche ?</div>
-                        <div class="text">
-                            Sélectionnez une des images ci-dessous pour obtenir la traduction associée. 
-                            Vous pouvez aussi uploader vos images personnalisées en cliquant sur l'image de droite.
-                        </div>
+                        <div class="title">{{ data.strings.title }}</div>
+                        <div class="text">{{ data.strings.text }}</div>
                         <div class="button-bar">
             
                             <el-upload
@@ -41,13 +38,13 @@
                             >
                                 <el-button type="primary" class="very-small-margin">
                                     <i class="el-icon-upload"></i>
-                                    Uploader une image
+                                    {{ data.strings.uploadButtonText }}
                                 </el-button>
                             </el-upload>
 
                             <el-button type="primary" @click="generateRandomImages" class="very-small-margin">
                                 <i class="el-icon-plus"></i>
-                                Charger d'autres images
+                                {{ data.strings.reloadButtonText }}
                             </el-button>
                         </div>
                     </el-card>
@@ -59,7 +56,7 @@
                         <div 
                             class="small-image-container">
                             <el-image
-                                :style="'width: ' + proposedImageProperties.width + 'px;' + 'height:' + proposedImageProperties.height + 'px;'"
+                                :style="'width: ' + data.proposedImageProperties.width + 'px;' + 'height:' + data.proposedImageProperties.height + 'px;'"
                                 v-for="(proposedImage, i) in proposedImages" 
                                 :key="i"
                                 :src="proposedImage"
@@ -78,15 +75,73 @@
 <script>
 export default {
     name: "DescriptionRow",
+    props: {
+        data: {
+            strings: {
+                title: {
+                    type: String,
+                    default: "",
+                },
+                text: {
+                    type: String,
+                    default: "",
+                },
+                uploadButtonText: {
+                    type: String,
+                    default: "",
+                },
+                reloadButtonText: {
+                    type: String,
+                    default: "",
+                },
+                processingText: {
+                    type: String,
+                    default: "",
+                },
+                errorText: {
+                    type: String,
+                    default: "",
+                },
+                alerts: {
+                    successMessage: {
+                        type: String,
+                        default: "",
+                    },
+                    badFileFormatMessage: {
+                        type: String,
+                        default: "",
+                    },
+                    errorMessage: {
+                        type: String,
+                        default: "",
+                    },
+                }
+                
+            },
+            proposedImageProperties: {
+                total: {
+                    type: Number,
+                    default: 6,
+                },
+                width: {
+                    type: Number,
+                    default: 200,
+                },
+                height: {
+                    type: Number,
+                    default: 150,
+                },
+            },
+            backendApi: {
+                type: String,
+                default: "",
+            },
+        }
+    },
   data() {
     return {
-      currentImage: "https://havingfun.fr/wp-content/uploads/2017/05/surf-wallpaper-3.jpg",
-      currentDescription: "un homme chevauchant une planche de surf sur une vague dans l'océan.",
-      proposedImageProperties: {
-          total: 6,
-          width: 200,
-          height: 150
-      },
+      currentImage: "/images/big/big_surf.jpg",
+      currentDescription: "Un homme chevauchant une vague sur une planche de surf.",
       proposedImages: [],
       uploadedFiles: []
     }
@@ -106,20 +161,20 @@ export default {
         generateRandomImages() {
             let imgs = [];
             
-            while (imgs.length != this.proposedImageProperties.total) {
+            while (imgs.length != this.data.proposedImageProperties.total) {
                 const id = this.randomIntFromInterval(1, 63);
                 if (!imgs.includes(id))
                     imgs.push(id);
             }
 
-            this.proposedImages = imgs.map(id => `${window.location.origin}/images/${id}.jpg`);
+            this.proposedImages = imgs.map(id => `${window.location.origin}/images/proposed/${id}.jpg`);
         },
         randomIntFromInterval(min, max) {  
             return Math.floor(Math.random() * (max - min + 1) + min)
         },
         updateImage(image) {
             this.currentImage = image;
-            this.currentDescription = "Traitement en cours ...";
+            this.currentDescription = this.data.strings.processingText;
         },
         updateDescriptionByUrl(url) {
             
@@ -137,7 +192,7 @@ export default {
                 redirect: 'follow'
             };
 
-            this.apiRequest("http://217.160.10.8:80/iadecode/from_url", requestOptions);
+            this.apiRequest(this.data.backendApi + "/iadecode/from_url", requestOptions);
         },
         updateDescriptionByFile(image) {
             
@@ -156,7 +211,7 @@ export default {
                 redirect: 'follow'
             };
 
-            this.apiRequest("http://217.160.10.8:80/iadecode/from_file", requestOptions);
+            this.apiRequest(this.data.backendApi + "/iadecode/from_file", requestOptions);
         },
         apiRequest(url, options) {
           
@@ -166,16 +221,16 @@ export default {
                         response.json()
                             .then(({ message }) => {
                                 this.currentDescription = message;    
-                                this.$message.success({ message: "Description effectuée avec succès : \"" + this.formattedCurrentDescription + "\".", center: true, showClose: true, duration: 10000 });
+                                this.$message.success({ message: this.data.strings.alerts.successMessage, center: true, showClose: true, duration: 10000 });
                             })
                             .catch(() => {
-                                this.$message.success({ message: "Format de fichiers non pris en charge...", center: true, showClose: true, duration: 10000 });
-                                this.currentDescription = "Une erreur est survenue...";
+                                this.$message.success({ message: this.data.strings.alerts.badFileFormatMessage, center: true, showClose: true, duration: 10000 });
+                                this.currentDescription = this.data.strings.errorText;
                             });
                     }
                 })
                 .catch(() => {
-                    this.$message.error({ message: 'Une erreur inattendue est survenue ! 👀', center: true, showClose: true, duration: 10000 });
+                    this.$message.error({ message: this.data.strings.alerts.errorMessage, center: true, showClose: true, duration: 10000 });
                 });
         }
   },

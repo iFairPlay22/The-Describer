@@ -2,9 +2,9 @@
     <el-row class="normal-y-margin">
         <el-col :span="24">
             <hr>
-            <h1 :id="id" class="big-title">
+            <h1 :id="data.id" class="big-title">
                 <el-icon class="el-icon-d-arrow-right"/>
-                {{ text }}
+                {{ data.text }}
             </h1>
             <hr>
         </el-col>
@@ -15,13 +15,15 @@
 export default {
     name: "BigText",
     props: {
-        text: {
-            type: String,
-            default: ""
-        },
-        id: {
-            type: String,
-            default: ""
+        data: {
+            text: {
+                type: String,
+                default: ""
+            },
+            id: {
+                type: String,
+                default: ""
+            }
         }
     }
 }

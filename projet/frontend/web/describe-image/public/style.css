@@ -212,3 +212,33 @@ body {
     align-items: center;
     text-align: center !important;
 }
+
+.services-container {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+}
+
+.services-container .service-card {
+    margin: 10px !important;
+    width: 30% !important;
+    min-width: 250px !important;
+    max-width: 400px !important;
+}
+
+.services-container .service-card .service-card-content {
+    height: 250px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.services-container .service-card .service-card-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: end !important;
+}
