@@ -1,23 +1,4 @@
-import os
-from tqdm import tqdm
-import nltk
-import pickle
-import numpy as np
-from PIL import Image
-from collections import Counter
-from pycocotools.coco import COCO
-import matplotlib.pyplot as plt
- 
 import torch
-import torch.nn as nn
-import torch.utils.data as data
-from torchvision import transforms
-import torchvision.models as models
-import torchvision.transforms as transforms
-from torch.nn.utils.rnn import pack_padded_sequence
-
-import cstm_model as cstm_model
-import cstm_load as cstm_load
 
 def predict(img_tensor, vocabulary, fullModel):
     

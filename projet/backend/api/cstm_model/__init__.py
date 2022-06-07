@@ -1,20 +1,7 @@
-import os
-from tqdm import tqdm
-import nltk
-import pickle
-import numpy as np
-from PIL import Image
-from collections import Counter
-from pycocotools.coco import COCO
-import matplotlib.pyplot as plt
-from datetime import datetime
- 
+import os 
 import torch
 import torch.nn as nn
-import torch.utils.data as data
-from torchvision import transforms
 import torchvision.models as models
-import torchvision.transforms as transforms
 from torch.nn.utils.rnn import pack_padded_sequence
 
 # Step 1 : CNN
@@ -62,9 +49,6 @@ class CNNModel(nn.Module):
         final_features = self.__batch_norm(linear_features)
 
         return final_features
-
-    def getAllParameters(self):
-        return list(self.__linear_layer.parameters()) + list(self.__batch_norm.parameters())
 
 # Step 2 : LSTM
 
@@ -126,9 +110,6 @@ class LSTMModel(nn.Module):
         sampled_indices = torch.stack(sampled_indices, 1)                               # sampled_ids: (batch_size, max_seq_length)
         return sampled_indices
 
-    def getAllParameters(self):
-        return list(self.parameters())
-
 # Step 3 : CNN & LSTM
 
 class FullModel(nn.Module):
@@ -161,27 +142,6 @@ class FullModel(nn.Module):
         # outputs = F.softmax(outputs, dim=1)
         return self.__loss_criterion(outputs, tgts)
 
-    # def zero_grad(self):
-    #     self.__decoder_model.zero_grad()
-    #     self.__encoder_model.zero_grad()
-
-    def getAllParameters(self):
-        return self.__decoder_model.getAllParameters() + self.__encoder_model.getAllParameters()
-
-    def save(self, output_models_path, epoch, batch_id):
-
-        dateString = str(datetime.now())[0:19].replace("-", "_").replace(":", "_").replace(" ", "_") + "_"
-
-        torch.save(
-            self.__decoder_model.state_dict(), 
-            os.path.join(output_models_path, 'decoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
-        )
-
-        torch.save(
-            self.__encoder_model.state_dict(), 
-            os.path.join(output_models_path, 'encoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
-        )
-
     def load(self):
 
         decoderFile = ''
@@ -197,11 +157,6 @@ class FullModel(nn.Module):
         
         self.__encoder_model.load_state_dict(torch.load('models_dir/' + encoderFile, map_location = self.device))
         self.__decoder_model.load_state_dict(torch.load('models_dir/' + decoderFile, map_location = self.device))
-
-
-    def trainMode(self):
-        self.__encoder_model.train()
-        self.__decoder_model.train()
 
     def testMode(self):
         self.__encoder_model.eval()
