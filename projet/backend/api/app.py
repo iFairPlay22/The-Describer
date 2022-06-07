@@ -6,12 +6,13 @@ from werkzeug.utils import secure_filename
 from IADecode import IADecode
 import urllib.request
 from flask_cors import CORS
-global decoder
+
 app = Flask(__name__)
 CORS(app)
+
 app.config['UPLOAD_FOLDER'] = "images/"
-ALLOWED_EXTENSIONS = {'png', 'jpeg',
-                      'jpg', 'tiff', 'bmp', 'webp'}
+ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'tiff', 'bmp', 'webp'}
+decoder = IADecode()
 
 
 def allowed_file(filename):
@@ -83,6 +84,4 @@ def from_url():
 
 
 if __name__ == "__main__":
-    #encoder_model, decoder_model, vocabulary, transform, device = IADecode.getEncoder_model()
-    decoder = IADecode()
     app.run()
