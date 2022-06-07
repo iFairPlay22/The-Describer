@@ -10,8 +10,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-global decoder
-
 app.config['UPLOAD_FOLDER'] = "images/"
 ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'tiff', 'bmp', 'webp'}
 CKPT_FILES_TOKENS = { "encoder" : "LJwDPw", "decoder" : "mFlRWR"}
@@ -24,11 +22,30 @@ def downloadFile(path, outputpath):
     urllib.request.urlretrieve(path, outputpath)
     print("Downloaded to: " + outputpath)
 
+
+if not(path.exists("./models_dir")):
+    os.mkdir("./models_dir")
+
+if not(path.exists("./models_dir/encoder.ckpt")):
+    downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["encoder"] + "/encoder.ckpt","./models_dir/encoder.ckpt")
+
+if not(path.exists("./models_dir/decoder.ckpt")):
+    downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt","./models_dir/decoder.ckpt")
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+global decoder
+def loadDecoder():
+    if not decoder:
+        decoder = IADecode()
+
 @app.route('/iadecode/from_file', methods=['POST'])
 def from_file():
+    
+    loadDecoder()
+
     # Valid Image format and save it to the server
 
     if 'file' not in request.files:
@@ -56,6 +73,9 @@ def from_file():
 
 @app.route('/iadecode/from_url', methods=['POST'])
 def from_url():
+
+    loadDecoder()
+
     payload = request.get_json()
 
     path = payload['file']
@@ -83,16 +103,4 @@ def from_url():
 
 
 if __name__ == "__main__":
-
-    if not(path.exists("./models_dir")):
-        os.mkdir("./models_dir")
-
-    if not(path.exists("./models_dir/encoder.ckpt")):
-        downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["encoder"] + "/encoder.ckpt","./models_dir/encoder.ckpt")
-
-    if not(path.exists("./models_dir/decoder.ckpt")):
-        downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt","./models_dir/decoder.ckpt")
-
-    decoder = IADecode()
-
     app.run()
