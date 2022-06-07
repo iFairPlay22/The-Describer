@@ -85,7 +85,7 @@ export default {
             width: 200,
             height: 150
         },
-        backendApi: "http://217.160.10.8:80"
+        backendApi: "https://the-describer.herokuapp.com"
       },
       title3Data: {
         id: "services",
