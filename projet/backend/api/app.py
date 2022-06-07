@@ -1,5 +1,7 @@
 from flask import Flask, request, redirect, url_for
 import os
+import os.path
+from os import path
 import time
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -12,13 +14,29 @@ CORS(app)
 
 app.config['UPLOAD_FOLDER'] = "images/"
 ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'tiff', 'bmp', 'webp'}
+CKPT_FILES_TOKENS = { "encoder" : "LJwDPw", "decoder" : "mFlRWR"}
+
+def downloadFile(path, outputpath):
+    print("Downloading file from: " + path)
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36')]
+    urllib.request.install_opener(opener)
+    urllib.request.urlretrieve(path, outputpath)
+    print("Downloaded to: " + outputpath)
+
+if not(path.exists("./models_dir")):
+    os.mkdir("./models_dir")
+
+if not(path.exists("./models_dir/encoder.ckpt")):
+    downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["encoder"] + "/encoder.ckpt","./models_dir/encoder.ckpt")
+
+if not(path.exists("./models_dir/decoder.ckpt")):
+    downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt","./models_dir/decoder.ckpt")
+
 decoder = IADecode()
 
-
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/iadecode/from_file', methods=['POST'])
 def from_file():
@@ -56,11 +74,7 @@ def from_url():
     extension = os.path.splitext(path)[1].split("?")[0]
     if extension == ".svg":
         return "SVG not supported", 400
-    validExtensions = ['.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.webp']
-    print("tot")
-    # if(extension not in validExtensions):
-    #     return "File not allowed", 400
-
+    
     # Download image
     fileName = str(round(time.time() * 1000))
     fileName = fileName.replace("-", "").replace(":", "").replace(" ", "_")
@@ -68,13 +82,9 @@ def from_url():
         fileName = fileName + extension
     else:
         fileName = fileName + ".jpg"
-    #fileName = os.path.basename(path)
+    
     savePath = os.path.join(app.config['UPLOAD_FOLDER'], fileName)
-    opener = urllib.request.build_opener()
-    opener.addheaders = [
-        ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36')]
-    urllib.request.install_opener(opener)
-    urllib.request.urlretrieve(path, savePath)
+    downloadFile(path, savePath)
 
     # Ask AI to decode image
     # Remove image

@@ -26,8 +26,7 @@ class IADecode:
             )
         ])
 
-        self.fullModel = cstm_model.FullModel(
-            self.device, self.image_shape, self.vocabulary)
+        self.fullModel = cstm_model.FullModel(self.device, self.image_shape, self.vocabulary)
         self.fullModel.load()
 
     def getPrediction(self, image_path):

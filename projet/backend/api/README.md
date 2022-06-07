@@ -1,6 +1,4 @@
-# Install google_trans_new
-pip install google_trans_new
+# Deploy
 
-go to C:\Python310\Lib\site-packages\google_trans_new
-Open file google_trans_new.py
-Replace line 151 by response = decoded_line 
+curl --upload-file ./decoder-2-3000.ckpt https://transfer.sh/decoder.ckpt
+curl --upload-file ./encoder-2-3000.ckpt https://transfer.sh/encoder.ckpt
