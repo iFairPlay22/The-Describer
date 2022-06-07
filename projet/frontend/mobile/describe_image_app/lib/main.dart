@@ -12,6 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
+
+import 'AudioManager.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -23,36 +26,37 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-    // Define the default brightness and colors.
-    primaryColor:const  Color(0xff110559),
-     primarySwatch: MaterialColor(
-  0xff110559,
-  <int, Color>{
-    50: Color(0xff110559),
-    100: Color(0xff110559),
-    200: Color(0xff110559),
-    300: Color(0xff110559),
-    400: Color(0xff110559),
-    500: Color(0xff110559),
-    600: Color(0xff110559),
-    700: Color(0xff110559),
-    800: Color(0xff110559),
-    900: Color(0xff110559),
-  }),
-    // Define the default font family.
-    fontFamily: 'Roboto',
+        // Define the default brightness and colors.
+        primaryColor: const Color(0xff110559),
+        primarySwatch: MaterialColor(0xff110559, <int, Color>{
+          50: Color(0xff110559),
+          100: Color(0xff110559),
+          200: Color(0xff110559),
+          300: Color(0xff110559),
+          400: Color(0xff110559),
+          500: Color(0xff110559),
+          600: Color(0xff110559),
+          700: Color(0xff110559),
+          800: Color(0xff110559),
+          900: Color(0xff110559),
+        }),
+        // Define the default font family.
+        fontFamily: 'Roboto',
 
-    // Define the default `TextTheme`. Use this to specify the default
-    // text styling for headlines, titles, bodies of text, and more.
-    textTheme: const TextTheme(
-      headline1: TextStyle(fontSize: 36.0, fontWeight: FontWeight.bold, color: Color(0xfff23869)),
-      headline6: TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic),
-      bodyText2: TextStyle(fontSize: 18.0, color: Color(0xfff23869)),
-    ),
-  ),
+        // Define the default `TextTheme`. Use this to specify the default
+        // text styling for headlines, titles, bodies of text, and more.
+        textTheme: const TextTheme(
+          headline1: TextStyle(
+              fontSize: 36.0,
+              fontWeight: FontWeight.bold,
+              color: Color(0xfff23869)),
+          headline6: TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic),
+          bodyText2: TextStyle(fontSize: 18.0, color: Color(0xfff23869)),
+        ),
+      ),
       title: 'The Describer',
       home: const MyHomePage(title: 'The Describer'),
-          debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -68,10 +72,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   XFile? _imageFile;
-
+  String _imageText = "";
   dynamic _pickImageError;
   String? _retrieveDataError;
-
+  Key _imageKey = UniqueKey();
+  String lastPath = "";
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _onImageButtonPressed(ImageSource source,
@@ -85,7 +90,6 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _imageFile = pickedFile;
     });
-     await getAIprediction();
   }
 
   Widget _previewImages() {
@@ -137,22 +141,30 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<String> getAIprediction() async {
-
+    if( _imageFile!.path == lastPath){
+      return _imageText;
+    }else{
+      lastPath = _imageFile!.path;
+    }
     var request = http.MultipartRequest(
-        'POST', Uri.parse('http://192.168.1.25:5000/iadecode/from_file'));
+        'POST', Uri.parse('https://www.loicfournier.fr/iadecode/from_file'));
     request.files
-        .add(http.MultipartFile.fromString('file', _imageFile!.path));
+        .add(await http.MultipartFile.fromPath('file', _imageFile!.path));
 
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
       var message = await response.stream.bytesToString();
-  
+
       var jsonResponse = convert.jsonDecode(message) as Map<String, dynamic>;
 
       var result = jsonResponse['message'];
+      setState(() {
+        _imageText = result;
+      });
       return result;
     } else {
+      var message = await response.stream.bytesToString();
       throw new Exception('Error getting response');
     }
   }
@@ -161,7 +173,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title!, style:Theme.of(context).textTheme.headline1 ,),
+        title: Text(
+          widget.title!,
+          style: Theme.of(context).textTheme.headline1,
+        ),
       ),
       body: Center(
         child: Column(
@@ -180,14 +195,19 @@ class _MyHomePageState extends State<MyHomePage> {
                           case ConnectionState.done:
                             if (!snapshot.hasData) {
                               return const Text(
-                                "Erreur lors de la prédiction de l'IA2",
+                                "Erreur lors de la prédiction de l'IA",
                                 textAlign: TextAlign.center,
                               );
                             } else {
-                              return Text(
-                                snapshot.data!,
-                                style : TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic),
-                                textAlign: TextAlign.center,
+                              return Semantics(
+                                label: 'image_picker_example_picked_image',
+                                child: Text(
+                                  snapshot.data!,
+                                  style: TextStyle(
+                                      fontSize: 18.0,
+                                      fontStyle: FontStyle.italic),
+                                  textAlign: TextAlign.center,
+                                ),
                               );
                             }
                           default:
@@ -243,6 +263,17 @@ class _MyHomePageState extends State<MyHomePage> {
         children: <Widget>[
           Semantics(
             label: 'image_picker_example_from_gallery',
+            child: FloatingActionButton(
+              onPressed: () => AudioManager().speak(_imageText),
+              heroTag: 'image0',
+              tooltip: "Choisissez une image dans la galerie",
+              child:Icon(
+        Icons.volume_up,
+      ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0),
             child: FloatingActionButton(
               onPressed: () {
                 _onImageButtonPressed(ImageSource.gallery, context: context);
