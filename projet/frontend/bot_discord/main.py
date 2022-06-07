@@ -71,7 +71,7 @@ async def on_message(message):
 async def request_from_url(message, url):
     await message.channel.send('Processing ...')
 
-    res = requests.post('https://the-describer.herokuapp.com/iadecode/from_url', json={'file': url})
+    res = requests.post('http://217.160.10.8:80/iadecode/from_url', json={'file': url})
         
     if(res.status_code == 200):
         embedMsg = discord.Embed(title="", description=res.json()['message'], color=0xff0000)
