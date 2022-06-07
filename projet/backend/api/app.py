@@ -1,16 +1,16 @@
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request
 import os
 import os.path
 from os import path
 import time
-from datetime import datetime
-from werkzeug.utils import secure_filename
 from IADecode import IADecode
 import urllib.request
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+
+global decoder
 
 app.config['UPLOAD_FOLDER'] = "images/"
 ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'tiff', 'bmp', 'webp'}
@@ -23,17 +23,6 @@ def downloadFile(path, outputpath):
     urllib.request.install_opener(opener)
     urllib.request.urlretrieve(path, outputpath)
     print("Downloaded to: " + outputpath)
-
-if not(path.exists("./models_dir")):
-    os.mkdir("./models_dir")
-
-if not(path.exists("./models_dir/encoder.ckpt")):
-    downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["encoder"] + "/encoder.ckpt","./models_dir/encoder.ckpt")
-
-if not(path.exists("./models_dir/decoder.ckpt")):
-    downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt","./models_dir/decoder.ckpt")
-
-decoder = IADecode()
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -88,10 +77,22 @@ def from_url():
 
     # Ask AI to decode image
     # Remove image
-    predicrtion = decoder.getPrediction(savePath)
+    prediction = decoder.getPrediction(savePath)
     os.remove(savePath)
-    return {"message": predicrtion}, 200
+    return {"message": prediction}, 200
 
 
 if __name__ == "__main__":
+
+    if not(path.exists("./models_dir")):
+        os.mkdir("./models_dir")
+
+    if not(path.exists("./models_dir/encoder.ckpt")):
+        downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["encoder"] + "/encoder.ckpt","./models_dir/encoder.ckpt")
+
+    if not(path.exists("./models_dir/decoder.ckpt")):
+        downloadFile("https://transfer.sh/" + CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt","./models_dir/decoder.ckpt")
+
+    decoder = IADecode()
+
     app.run()
