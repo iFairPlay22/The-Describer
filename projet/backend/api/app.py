@@ -13,6 +13,7 @@ CORS(app)
 app.config['UPLOAD_FOLDER'] = "images/"
 ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'tiff', 'bmp', 'webp'}
 CKPT_FILES_TOKENS = { "encoder" : "LJwDPw", "decoder" : "mFlRWR"}
+decoder = None
 
 def downloadFile(path, outputpath):
     print("Downloading file from: " + path)
@@ -36,9 +37,9 @@ if not(path.exists("./models_dir/decoder.ckpt")):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-global decoder
 def loadDecoder():
-    if not decoder:
+    global decoder
+    if decoder is None:
         decoder = IADecode()
 
 @app.route('/iadecode/from_file', methods=['POST'])
