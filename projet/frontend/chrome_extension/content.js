@@ -13,7 +13,7 @@ var getAltBalise = async (image) => {
     redirect: "follow",
   };
   
-  fetch("http://217.160.10.8:80/iadecode/from_url", requestOptions)
+  fetch("https://www.loicfournier.fr/iadecode/from_url", requestOptions)
     .then((response) => {
       if(response.status == 200){
         return response.json();
