@@ -110,12 +110,13 @@ def from_url(lang):
     # Ask AI to decode image
     # Remove image
     try:
-        prediction = decoder.getPrediction(path, lang)
+        prediction = decoder.getPrediction(savePath, lang)
         result = ({"message": prediction}, 200)
     except Exception as e:
         result = ("Error: " + str(e), 500)
+        print(str(e))
     finally:
-        os.remove(path)
+        os.remove(savePath)
     return result
 
 
