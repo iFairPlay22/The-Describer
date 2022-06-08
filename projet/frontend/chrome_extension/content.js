@@ -13,8 +13,8 @@ var getAltBalise = async (image, userLocale) => {
     redirect: "follow",
   };
 
-  fetch(
-    "https://loic-fournier.fr/iadecode/from_url/" + userLocale,
+  await fetch(
+    "https://www.loicfournier.fr/iadecode/from_url/" + userLocale,
     requestOptions
   )
     .then((response) => {
@@ -43,21 +43,20 @@ var getAltBalise = async (image, userLocale) => {
 };
 
 if (
-  chrome.storage.sync.get("describer_enabled", function (data) {
+  chrome.storage.sync.get("describer_enabled", async function (data) {
     if (data.describer_enabled) {
       const userLocale =
         navigator.languages && navigator.languages.length
           ? navigator.languages[0]
           : navigator.language;
-      console.log("userLocale", userLocale);
+
       var images = document.getElementsByTagName("img");
       for (var i = 0, l = images.length; i < l; i++) {
         //if alt is null or empty
         if (images[i].alt == "" || images[i].alt == null) {
           console.log(i);
-          getAltBalise(images[i], userLocale);
+          await getAltBalise(images[i], userLocale);
         }
-        console.log(i + images[i].alt);
       }
     }
   })

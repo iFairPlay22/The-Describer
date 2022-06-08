@@ -229,7 +229,7 @@ body {
 }
 
 .services-container .service-card .service-card-content {
-    height: 250px !important;
+    height: 275px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
