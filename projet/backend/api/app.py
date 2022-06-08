@@ -51,8 +51,6 @@ def loadDecoder():
 @app.route('/iadecode/from_file/<lang>', methods=['POST'])
 def from_file(lang):
 
-    loadDecoder()
-
     # Valid Image format and save it to the server
 
     if 'file' not in request.files:
@@ -67,14 +65,9 @@ def from_file(lang):
         filename = file.filename  # secure_filename(file.filename)
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(os.path.join(path))
-        try:
-            prediction = decoder.getPrediction(path, lang)
-            result = ({"message": prediction}, 200)
-        except Exception as e:
-            result = ("Error: " + str(e), 500)
-        finally:
-            os.remove(path)
-        return result
+        prediction = decoder.getPrediction(path, lang)
+        os.remove(path)
+        return {"message": prediction}, 200
     else:
         return "File not allowed", 400
 
@@ -85,8 +78,6 @@ def from_file(lang):
 
 @app.route('/iadecode/from_url/<lang>', methods=['POST'])
 def from_url(lang):
-
-    loadDecoder()
 
     payload = request.get_json()
 
@@ -109,16 +100,11 @@ def from_url(lang):
 
     # Ask AI to decode image
     # Remove image
-    try:
-        prediction = decoder.getPrediction(savePath, lang)
-        result = ({"message": prediction}, 200)
-    except Exception as e:
-        result = ("Error: " + str(e), 500)
-        print(str(e))
-    finally:
-        os.remove(savePath)
-    return result
+    prediction = decoder.getPrediction(savePath, lang)
+    os.remove(savePath)
+    return {"message": prediction}, 200
 
 
 if __name__ == "__main__":
+    loadDecoder()
     app.run()
