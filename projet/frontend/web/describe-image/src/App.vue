@@ -1,14 +1,14 @@
 <template>
   <div id="app">
-    <main-header :data="headerData"/>
-    
+    <main-header :data="headerData" />
+
     <div id="body">
-      <big-text :data="title1Data"/>
-      <description-row :data="descriptionData"/>
-      <big-text :data="title2Data"/>
-      <ai-row :data="aiData"/>
-      <big-text :data="title3Data"/>
-      <services-row :data="servicesData"/>
+      <big-text :data="title1Data" />
+      <description-row :data="descriptionData" />
+      <big-text :data="title2Data" />
+      <ai-row :data="aiData" />
+      <big-text :data="title3Data" />
+      <services-row :data="servicesData" />
     </div>
   </div>
 </template>
@@ -27,21 +27,21 @@ export default {
   data() {
     return {
       headerData: {
-          name: "The Describers",
-          links: [
-              {
-                  name: "Origine",
-                  id: "what"
-              },
-              {
-                  name: "L'IA",
-                  id: "ai"
-              },
-              {
-                  name: "Services",
-                  id: "services"
-              }
-          ]
+        name: "The Describers",
+        links: [
+          {
+            name: "Origine",
+            id: "what"
+          },
+          {
+            name: "L'IA",
+            id: "ai"
+          },
+          {
+            name: "Services",
+            id: "services"
+          }
+        ]
       },
       title1Data: {
         id: "what",
@@ -52,14 +52,14 @@ export default {
         text: "Un projet innovant pour un monde meilleur",
         image: "/images/big/big_cat.jpg",
         groups: [
-            {
-              title: "Projet",
-              text: "Création d'une intelligence artificielle capable de décrire des images"
-            },
-            {
-              title: "Objectif",
-              text: "Obtenir plus facilement la description d'image sur nos outils numériques"
-            }
+          {
+            title: "Projet",
+            text: "Création d'une intelligence artificielle capable de décrire des images"
+          },
+          {
+            title: "Objectif",
+            text: "Obtenir plus facilement la description d'image sur nos outils numériques"
+          }
         ],
       },
       title2Data: {
@@ -72,20 +72,21 @@ export default {
           text: "Sélectionnez une des images ci-dessous pour obtenir la traduction associée. Vous pouvez aussi uploader vos images personnalisées en cliquant sur l'image de droite.",
           uploadButtonText: "Uploader une image",
           reloadButtonText: "Charger d'autres images",
-          processingText: "Traitement en cours ...",    
+          processingText: "Traitement en cours ...",
           errorText: "Une erreur est survenue...",
           alerts: {
-              successMessage: "Description effectuée avec succès !",
-              badFileFormatMessage: "Format de fichiers non pris en charge...",
-              errorMessage: 'Une erreur inattendue est survenue ! 👀'
+            successMessage: "Description effectuée avec succès !",
+            badFileFormatMessage: "Format de fichiers non pris en charge...",
+            errorMessage: 'Une erreur inattendue est survenue ! 👀'
           }
         },
         proposedImageProperties: {
-            total: 6,
-            width: 200,
-            height: 150
+          total: 6,
+          width: 200,
+          height: 150
         },
-        backendApi: "https://www.loicfournier.fr"
+        backendApi: "https://www.loicfournier.fr",
+        userLocale: "en",
       },
       title3Data: {
         id: "services",
@@ -118,5 +119,12 @@ export default {
       }
     };
   },
+  created() {
+    const userLocale =
+      navigator.languages && navigator.languages.length
+        ? navigator.languages[0]
+        : navigator.language;
+    this.aiData.userLocale = userLocale;
+  }
 }
 </script>
