@@ -26,16 +26,16 @@ def downloadFile(path, outputpath):
     print("Downloaded to: " + outputpath)
 
 
-if not(path.exists("./models_dir")):
-    os.mkdir("./models_dir")
+# if not(path.exists("./models_dir")):
+#     os.mkdir("./models_dir")
 
-if not(path.exists("./models_dir/encoder.ckpt")):
-    downloadFile("https://transfer.sh/" +
-                 CKPT_FILES_TOKENS["encoder"] + "/encoder.ckpt", "./models_dir/encoder.ckpt")
+# if not(path.exists("./models_dir/encoder.ckpt")):
+#     downloadFile("https://transfer.sh/" +
+#                  CKPT_FILES_TOKENS["encoder"] + "/encoder.ckpt", "./models_dir/encoder.ckpt")
 
-if not(path.exists("./models_dir/decoder.ckpt")):
-    downloadFile("https://transfer.sh/" +
-                 CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt", "./models_dir/decoder.ckpt")
+# if not(path.exists("./models_dir/decoder.ckpt")):
+#     downloadFile("https://transfer.sh/" +
+#                  CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt", "./models_dir/decoder.ckpt")
 
 
 def allowed_file(filename):
