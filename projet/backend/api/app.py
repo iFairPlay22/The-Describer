@@ -82,7 +82,7 @@ def from_url(lang):
     payload = request.get_json()
 
     path = payload['file']
-
+    print(path)
     extension = os.path.splitext(path)[1].split("?")[0]
     if extension == ".svg":
         return "SVG not supported", 400

@@ -13,7 +13,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 bot = commands.Bot(command_prefix='!')
 bot.enable_automatic_description = True
 bot.language = "EN"
-bot.supported_languages = ["BG", "CS", "DA", "DE", "EL", "ES", "FI", "FR", "HU",
+bot.supported_languages = ["BG", "CS", "DA", "DE", "EL", "EN", "ES", "FI", "FR", "HU",
                                "ID", "IT", "JA", "LT", "LV", "NL", "PL", "PT-PT", "PT-BR", "RO", "RU", "SK", "SL", "SV", "TR", "ZH"]
 
 # Command test
@@ -56,7 +56,7 @@ async def on_message(message):
         embedMsg = discord.Embed(title="About me :", description="", color=0xff0000)
         embedMsg.add_field(name="Website", value="https://the-describers.netlify.app/", inline=False)
         embedMsg.add_field(name="Github", value="https://github.com/iFairPlay22/DescribeImage", inline=False)
-        embedMsg.add_field(name="Supported languages", value="BG, CS, DA, DE, EL, ES, FI, FR, HU, ID, IT, JA, LT, LV, \nNL, PL, PT-PT, PT-BR, RO, RU, SK, SL, SV, TR, ZH", inline=False)
+        embedMsg.add_field(name="Supported languages", value="BG, CS, DA, DE, EL, EN, ES, FI, FR, HU, ID, IT, JA, LT, LV, \nNL, PL, PT-PT, PT-BR, RO, RU, SK, SL, SV, TR, ZH", inline=False)
         embedMsg.add_field(name="Authors", value="• Fabien Courtois\n• Loïc Fournier\n• Lucas Billard\n• Ewen Bouquet", inline=False)
         await message.reply(embed = embedMsg)
 
@@ -79,7 +79,7 @@ async def on_message(message):
             await message.reply(embed = embedMsg)
         else:
             embedMsg = discord.Embed(title="", description="", color=0xff0000)
-            embedMsg.add_field(name="Supported languages", value="BG, CS, DA, DE, EL, ES, FI, FR, HU, ID, IT, JA, LT, LV, \nNL, PL, PT-PT, PT-BR, RO, RU, SK, SL, SV, TR, ZH", inline=False)
+            embedMsg.add_field(name="Supported languages", value="BG, CS, DA, DE, EL, EN, ES, FI, FR, HU, ID, IT, JA, LT, LV, \nNL, PL, PT-PT, PT-BR, RO, RU, SK, SL, SV, TR, ZH", inline=False)
             await message.reply(embed = embedMsg)
     else:
         return
@@ -88,7 +88,7 @@ async def on_message(message):
 async def request_from_url(message, url):
     await message.channel.send('Processing ...')
 
-    res = requests.post('https://loicfournier.fr/iadecode/from_url/'+bot.language, json={'file': url})
+    res = requests.post('https://www.loicfournier.fr/iadecode/from_url/'+bot.language, json={'file': url})
         
     if(res.status_code == 200):
         embedMsg = discord.Embed(title="", description=res.json()['message'].capitalize(), color=0xff0000)
