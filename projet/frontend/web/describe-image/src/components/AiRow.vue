@@ -182,7 +182,7 @@ export default {
                 redirect: 'follow'
             };
 
-            this.apiRequest(this.data.backendApi + "/iadecode/from_url/" + userLocale, requestOptions);
+            this.apiRequest(this.data.backendApi + "/iadecode/from_url/" + this.data.userLocale, requestOptions);
         },
         updateDescriptionByFile(image) {
 
@@ -201,7 +201,7 @@ export default {
                 redirect: 'follow'
             };
 
-            this.apiRequest(this.data.backendApi + "/iadecode/from_file" + userLocale, requestOptions);
+            this.apiRequest(this.data.backendApi + "/iadecode/from_file" + this.data.userLocale, requestOptions);
         },
         apiRequest(url, options) {
 
