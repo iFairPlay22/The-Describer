@@ -88,7 +88,7 @@ async def on_message(message):
 async def request_from_url(message, url):
     await message.channel.send('Processing ...')
 
-    res = requests.post('https://loicfournier.fr/iadecode/from_url/'+bot.language, json={'file': url})
+    res = requests.post('https://www.loicfournier.fr/iadecode/from_url/'+bot.language, json={'file': url})
         
     if(res.status_code == 200):
         embedMsg = discord.Embed(title="", description=res.json()['message'].capitalize(), color=0xff0000)
