@@ -14,7 +14,7 @@ var getAltBalise = async (image, userLocale) => {
   };
 
   await fetch(
-    "https://loicfournier.fr/iadecode/from_url/" + userLocale,
+    "https://www.loicfournier.fr/iadecode/from_url/" + userLocale,
     requestOptions
   )
     .then((response) => {
