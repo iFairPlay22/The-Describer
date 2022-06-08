@@ -120,11 +120,11 @@ export default {
     };
   },
   created() {
-    const userLocale =
-      navigator.languages && navigator.languages.length
+    const userLanguage =
+      navigator && navigator.languages && navigator.languages.length
         ? navigator.languages[0]
         : navigator.language;
-    this.aiData.userLocale = userLocale;
+    this.aiData.userLocale = userLanguage;
   }
 }
 </script>
