@@ -48,17 +48,17 @@ export default {
         text: "Origine & Contexte",
       },
       descriptionData: {
-        title: "Ecosystème d'aide aux personnes mal-voyantes",
-        text: "Un projet innovant pour un monde meilleur",
+        title: "Ecosystème d'aide aux personnes malvoyantes",
+        text: "Un projet innovant pour un monde compris de tous ! 🙄",
         image: "/images/big/big_cat.jpg",
         groups: [
           {
             title: "Projet",
-            text: "Création d'une intelligence artificielle capable de décrire des images"
+            text: "Création d'une intelligence artificielle capable de décrire une image et son contetxe"
           },
           {
             title: "Objectif",
-            text: "Obtenir plus facilement la description d'image sur nos outils numériques"
+            text: "Rendre accessible à tous la description d'image sur nos outils numériques"
           }
         ],
       },
@@ -97,7 +97,7 @@ export default {
           {
             avatar: "/images/logos/mobile_app_logo.png",
             title: "Application mobile",
-            description: "Prennez des photos, et obtienez la description ! Disponible sur Android & IOS ! ✨",
+            description: "Prennez des photos, et obtenez la description ! Disponible sur Android & IOS ! ✨",
             button: "Télécharger",
             callback: () => { window.open("/downloads/the_describers_app.zip", '_blank') }
           },
