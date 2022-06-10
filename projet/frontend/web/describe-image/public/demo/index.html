@@ -1,18 +1,33 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Demo</title>
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo</title>
+  </head>
 
-<body>
-  <h1>Des images partout... 😣</h1>
-  
-  <div id="images-container" style="display: flex; justify-content: space-around; align-items: space-around; flex-wrap: wrap;">
-  </div>
-  
-  <script>
+  <body>
+    <h1>Des images partout... 😣</h1>
+
+    <div
+      id="images-container"
+      style="
+        display: flex;
+        justify-content: space-around;
+        align-items: space-around;
+        flex-wrap: wrap;
+      "
+    >
+      <img src="./images/1.jpg" height="400px" />
+      <img src="./images/2.jpg" height="200px" />
+      <img src="./images/3.jpg" height="300px" />
+      <img src="./images/4.jpg" height="250px" />
+      <img src="./images/5.jpg" height="100px" />
+      <img src="./images/6.jpg" height="200px" />
+      <img src="./images/7.jpg" height="350px" />
+    </div>
+
+    <!-- <script>
     function getRandomNumberBetween(min, max){
         return Math.floor(Math.random()*(max-min+1)+min);
     }
@@ -28,6 +43,6 @@
         img.style.width = (rn*4/3) + 'px';
         imagesContainer.appendChild(img);
     }
-  </script>
-</body>
+  </script> -->
+  </body>
 </html>

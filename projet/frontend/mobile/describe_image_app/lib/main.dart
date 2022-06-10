@@ -147,7 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
       lastPath = _imageFile!.path;
     }
     var request = http.MultipartRequest(
-        'POST', Uri.parse('https://www.loicfournier.fr/iadecode/from_file'));
+        'POST', Uri.parse('https://www.loicfournier.fr/iadecode/from_file/${Platform.localeName}'));
     request.files
         .add(await http.MultipartFile.fromPath('file', _imageFile!.path));
 
