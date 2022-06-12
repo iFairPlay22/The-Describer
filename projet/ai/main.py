@@ -63,8 +63,11 @@ if __name__ == "__main__":
         # "install", 
         # "train",
         # "test"
-        "predict"
+        # "predict"
     ]
+
+    if not todo:
+        print("Please select at least one of the following options : install / train / test / predict...")
 
     if "install" in todo:
 

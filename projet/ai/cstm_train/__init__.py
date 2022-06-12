@@ -123,7 +123,7 @@ def get_loader(data_path : str, input_annotations_captions_train_path : str, voc
     
     return custom_training_data_loader
 
-def learn(custom_training_data_loader : CustomCocoDataset, device, optimizer, fullModel : cstm_model.FullModel, epoch : int, output_models_path : str, learnPlot : cstm_plot.SmartPlot, learnPlot2 : cstm_plot.SmartPlot):
+def learn(custom_training_data_loader : CustomCocoDataset, device, optimizer, fullModel : cstm_model.FullModel, epoch : int, output_models_path : str, learnPlot : cstm_plot.SmartPlot = None , learnPlot2 : cstm_plot.SmartPlot = None):
     """ Learn 1 epoch of the model and save the loss in the plots. """
 
     print("\n\n==> learn()")
@@ -150,12 +150,13 @@ def learn(custom_training_data_loader : CustomCocoDataset, device, optimizer, fu
         allLoss.append(loss.item())
         
         # Backward and step
-        optimizer.backward()
+        loss.backward()
         optimizer.step()
 
         batchNb += 1
 
     # We save the data loss for each epoch
+    print()
     print(' [LEARNING] : Epoch [{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch+1, sum(allLoss), sum(allLoss) / len(allLoss))) 
 
     if learnPlot:
@@ -233,6 +234,7 @@ def eval(custom_testing_data_loader : CustomCocoDataset, device, vocabulary : cs
 
         batchNb += 1
 
+    print()
     print(' [TESTING] : Epoch [{}]'.format(epoch+1)) 
 
     print('>> Ratios')
@@ -280,7 +282,7 @@ def train(totalEpochs : int, batch_size : int, step : float, vocabulary : cstm_l
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
         # Learn
-        learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, output_models_path, learnPlot, learnPlot2)
+        learn(custom_training_data_loader, device, optimizer, fullModel, epoch, output_models_path, learnPlot, learnPlot2)
 
         if withTestDataset:
             # test
@@ -305,6 +307,7 @@ def testAll(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, batc
         print("\n\n==> Evaluating the train model...")
         custom_training_data_loader = get_loader(images_path[0]["output"], captions_path[0], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
         eval(custom_training_data_loader, device, vocabulary, fullModel, 0, spacyEn, None)
+        print()
 
     if withTestDataset:    
         # Build the data loader for the testing set
@@ -312,3 +315,4 @@ def testAll(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, batc
         print("\n\n==> Evaluating the test model...")
         custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
         eval(custom_testing_data_loader, device, vocabulary, fullModel, 0, spacyEn, None)
+        print()

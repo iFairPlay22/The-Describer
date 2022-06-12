@@ -183,13 +183,13 @@ class FullModel(nn.Module):
         # Save the encoder model
         torch.save(
             self.__decoder_model.state_dict(), 
-            os.path.join(output_models_path, 'decoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1))
+            os.path.join(output_models_path, 'decoder_{}_{}.ckpt'.format(dateString, epoch + 1))
         )
 
         # Save the decoder model
         torch.save(
             self.__encoder_model.state_dict(), 
-            os.path.join(output_models_path, 'encoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1))
+            os.path.join(output_models_path, 'encoder_{}_{}.ckpt'.format(dateString, epoch + 1))
         )
 
     def load(self, input_models_path : str):
