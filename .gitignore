@@ -7,3 +7,4 @@ projet/ai/data_dir/*
 projet/ai/models_dir/*
 projet/ai/output/*
 *.ckpt
+projet/frontend/bot_discord/.env
