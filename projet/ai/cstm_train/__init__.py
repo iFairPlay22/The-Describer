@@ -1,31 +1,25 @@
-import spacy 
 import difflib
 import re
 import os
 from tqdm import tqdm
 import nltk
-import pickle
-import numpy as np
 from PIL import Image
-from collections import Counter
 from pycocotools.coco import COCO
-import matplotlib.pyplot as plt
- 
 import torch
-import torch.nn as nn
 import torch.utils.data as data
-from torchvision import transforms
-import torchvision.models as models
-import torchvision.transforms as transforms
 from torch.nn.utils.rnn import pack_padded_sequence
 
+import cstm_load as cstm_load
 import cstm_model as cstm_model
 import cstm_predict as cstm_predict
 import cstm_plot as cstm_plot
+import cstm_util
 
 class CustomCocoDataset(data.Dataset):
+    """ Custom Coco dataset that can represent a subset of the original dataset for training, test or evaluation. """
     
-    def __init__(self, output_rezized_image_folder_path, input_annotations_captions_train_path, vocabulary, transform=None):
+    def __init__(self, output_rezized_image_folder_path : str, input_annotations_captions_train_path : str, vocabulary : cstm_load.Vocab, transform = None):
+        """ Initialize the dataset. """
 
         print("\n\n==> InItializating CustomCocoDataset()")
 
@@ -35,11 +29,10 @@ class CustomCocoDataset(data.Dataset):
         self.__vocabulary = vocabulary
         self.__transform = transform
  
-    #Returns one data pair (image, caption)
-    def __getitem__(self, idx):
+    def __getitem__(self, idx : int):
+        """ Returns one data pair (image, caption) """
 
         annotation_id = self.__indices[idx]
-
 
         # Step 1 => Get the resized image and apply a transform to it 
 
@@ -75,10 +68,11 @@ class CustomCocoDataset(data.Dataset):
         return image, caption_ids_torch
  
     def __len__(self):
+        """ Return the size of the dataset """
         return len(self.__indices)
  
-#  Creates mini-batch tensors from the list of tuples (image, caption)
-def collate_function(data_batch):
+def collate_function(data_batch : int):
+    """ Creates mini-batch tensors from the list of tuples (image, caption) """
 
     # Sort a data list by caption length (descending order).
     data_batch.sort(key=lambda d: len(d[1]), reverse=True)
@@ -110,13 +104,16 @@ def collate_function(data_batch):
     #         cap_lens: list; valid length for each padded caption.
 
     return images, tgts, cap_lens
- 
-# Returns torch.utils.data.DataLoader for custom coco dataset.
-# This will return (images, captions, lengths) for each iteration.
-#   images: a tensor of shape (batch_size, 3, 224, 224).
-#   captions: a tensor of shape (batch_size, padded_length).
-#   lengths: a list indicating valid length for each caption. length is (batch_size).
-def get_loader(data_path, input_annotations_captions_train_path, vocabulary, transform, batch_size, shuffle, num_workers):
+
+def get_loader(data_path : str, input_annotations_captions_train_path : str, vocabulary : cstm_load.Vocab, transform, batch_size : int, shuffle, num_workers):
+
+    """
+    Returns torch.utils.data.DataLoader for custom coco dataset.
+    This will return (images, captions, lengths) for each iteration.
+      images: a tensor of shape (batch_size, 3, 224, 224).
+      captions: a tensor of shape (batch_size, padded_length).
+      lengths: a list indicating valid length for each caption. length is (batch_size).
+    """
 
     # COCO caption dataset
     coco_dataset = CustomCocoDataset(data_path, input_annotations_captions_train_path, vocabulary, transform)
@@ -126,64 +123,71 @@ def get_loader(data_path, input_annotations_captions_train_path, vocabulary, tra
     
     return custom_training_data_loader
 
-def train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, totalBatch, output_models_path, learnPlot):
+def learn(custom_training_data_loader : CustomCocoDataset, device, optimizer, fullModel : cstm_model.FullModel, epoch : int, output_models_path : str, learnPlot : cstm_plot.SmartPlot, learnPlot2 : cstm_plot.SmartPlot):
+    """ Learn 1 epoch of the model and save the loss in the plots. """
 
-    print("\n\n==> train_learn()")
-    
-    batchNb = 0
+    print("\n\n==> learn()")
 
     # Learn
+    batchNb = 0
     allLoss = []
+
     for images, captions, lens in tqdm(custom_training_data_loader):
 
-        # Set mini-batch dataset
+        # Get the bach data
         images = images.to(device)
         captions = captions.to(device)
         tgts = pack_padded_sequence(captions, lens, batch_first=True)[0]
 
-        # Forward, backward and optimize
+        # Reset the gradient
         optimizer.zero_grad()
 
-        # We make predictions
+        # Make predictions
         outputs = fullModel.forward(images, captions, lens)
 
-        # We get the total error
+        # Compute the total error
         loss    = fullModel.loss(outputs, tgts)
         allLoss.append(loss.item())
-
         
-        .backward()
+        # Backward and step
+        optimizer.backward()
         optimizer.step()
 
         batchNb += 1
 
-        # Print log info
-        if batchNb % 250 == 0:
-            print(' [LEARNING] : Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, totalEpochs, batchNb, totalBatch, loss.item(), np.exp(loss.item()))) 
+    # We save the data loss for each epoch
+    print(' [LEARNING] : Epoch [{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch+1, sum(allLoss), sum(allLoss) / len(allLoss))) 
 
-        # Save the model checkpoints
-        if (batchNb+1) % 1000 == 0:
-            fullModel.save(output_models_path, epoch, batchNb)
+    if learnPlot:
+        learnPlot.addPoint("Total loss", "red", sum(allLoss))
 
-    # We save the weights of the models
-    learnPlot.addPoint("Total loss", "red", sum(allLoss))
-    # learnPlot.addPoint("Average loss", "green", sum(allLoss) / len(allLoss))
-    fullModel.save(output_models_path, epoch, totalBatch)
+    if learnPlot2:
+        learnPlot2.addPoint("Average loss", "red", sum(allLoss) / len(allLoss))
 
-def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, totalBatch, spacyEn, testPlot):
+    # We save the model
+    fullModel.save(output_models_path, epoch)
 
-    print("\n\n==> train_test()")
+def eval(custom_testing_data_loader : CustomCocoDataset, device, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, epoch, spacyEn, testPlot):
+    """ Test 1 epoch of the model and save the accuracy in the plots. """
+
+    print("\n\n==> eval()")
     
     batchNb = 0
     imageNb = 0
 
     ratios = [
-        { "min": 20, "color": "red",    "sum": 0 },
-        { "min": 40, "color": 'orange', "sum": 0 },
-        { "min": 60, "color": 'blue',   "sum": 0 },
-        { "min": 80, "color": 'cyan',   "sum": 0 },
-        { "min": 90, "color": 'green',  "sum": 0 }
+        { "min": 0.1, "color": "orange", "sum": 0 },
+        { "min": 0.2, "color": "blue",   "sum": 0 },
+        { "min": 0.3, "color": 'green',  "sum": 0 },
+        { "min": 0.4, "color": 'brown',  "sum": 0 },
+        { "min": 0.5, "color": 'grey',   "sum": 0 },
+        { "min": 0.6, "color": 'red',    "sum": 0 },
+        { "min": 0.7, "color": 'pink',   "sum": 0 },
+        { "min": 0.8, "color": 'yellow', "sum": 0 },
+        { "min": 0.9, "color": 'aqua',   "sum": 0 }
     ]
+    detailRatios = {}
+    sw = spacyEn.Defaults.stop_words
 
     # Test
     for images, captions, lens in tqdm(custom_testing_data_loader):
@@ -191,119 +195,120 @@ def train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_
         images = images.to(device)
         captions = captions.to(device)
         predictions = cstm_predict.predict(images, vocabulary, fullModel)
-        imagesNg = len(images)
 
-        for j in range(imagesNg):
+        for j in range(len(images)):
 
             # Get the caption / prediction
-            prediction = vocabulary.translate(predictions["indices"][j].cpu().numpy())
-            caption = vocabulary.translate(captions[j].cpu().numpy())[1:-1]
-            
-            # Remove stop words from the string & punctuation
-            predictedSentance = re.sub(r'[^\w\s]', '', prediction).split(" ")
-            goodSentance = re.sub(r'[^\w\s]', '', caption).split(" ")
+            prediction = vocabulary.translate(predictions["indices"][j].cpu().numpy()).split()[1:-1]
+            caption = vocabulary.translate(captions[j].cpu().numpy()).split()[1:-1]
 
-            # Words to integer list
-            sw = spacyEn.Defaults.stop_words
-            predictedKeywords = list(set( w for w in predictedSentance if w and not w in sw ))
-            goodKeywords = list(set( w for w in goodSentance if w and not w in sw ))
+            # Remove punctuation
+            prediction = re.sub(r'[^\w\s]', '', " ".join(prediction)).split(" ")
+            caption = re.sub(r'[^\w\s]', '', " ".join(caption)).split(" ")
+
+            # Remove stop words 
+            predictionWithoutSw = set( w for w in prediction  if not w in sw )
+
+            # Check if we can find sense similarities
+            commonWordsWithSynonyms = [
+                syn
+                for predictionWordWithoutSw in predictionWithoutSw 
+                for syn in cstm_util.getSynonyms(predictionWordWithoutSw)
+                if any(caption[idx : idx + len(syn)] == syn for idx in range(len(caption) - len(syn) + 1))
+            ]
 
             # Update ratios
-            currentRatio = difflib.SequenceMatcher(None, predictedKeywords, goodKeywords).ratio()
+            totalCommonWords = len(commonWordsWithSynonyms)
+            if totalCommonWords in detailRatios:
+                detailRatios[totalCommonWords] += 1
+            else:
+                detailRatios[totalCommonWords] = 1
+
+            currentRatio = totalCommonWords / len(predictionWithoutSw)
             for ratio in ratios:
-                if ratio["min"] <= 100 * currentRatio:
+                if ratio["min"] <= currentRatio:
                     ratio["sum"] += 1
             
             imageNb += 1
 
         batchNb += 1
 
-        # Print log info
-        if batchNb % 250 == 0:
-            print(' [TESTING] : Epoch [{}/{}], Step [{}/{}]'.format(epoch, totalEpochs, batchNb, totalBatch))
-            for ratio in ratios:
-                print(' Good predictions for ratio {} : {}% ({}/{})'.format(ratio["min"], ratio["sum"] * 100 / imageNb, ratio["sum"], imageNb))
+    print(' [TESTING] : Epoch [{}]'.format(epoch+1)) 
 
-    print(' [TESTING] : Epoch [{}/{}], Step [{}/{}]'.format(epoch, totalEpochs, batchNb, totalBatch))
+    print('>> Ratios')
     for ratio in ratios:
         ratio["avg"] = ratio["sum"] * 100 / imageNb
         print(' Good predictions for ratio {} : {}% ({}/{})'.format(ratio["min"], ratio["avg"], ratio["sum"], imageNb))
-        testPlot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
-    
-def train(totalEpochs, step, vocabulary, fullModel, images_path, captions_path, output_models_path, device, transform, spacyEn):
 
-    # Create model directory
+        if testPlot:
+            testPlot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
+    
+    print('>> Detail')
+    for commonWords, number in sorted(detailRatios.items(), key=lambda item: item[0]):
+        ratio = number * 100 / imageNb
+        print("Common words {} : {}% ({}/{})".format(commonWords, ratio, number, imageNb))
+
+def train(totalEpochs : int, batch_size : int, step : float, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, images_path : str, captions_path : str, output_models_path : str, output_plot_path : str, device, transform, spacyEn, withTestDataset=False):
+    """ Train and test the model with many epochs """
+
+    # Create the model directory if not exists
     if not os.path.exists(output_models_path):
         os.makedirs(output_models_path)
 
-    # Build data loader
-    batch_size = 128
-
+    # Build the data loader for the training set
     custom_training_data_loader = get_loader(images_path[0]["output"], captions_path[0], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
-    training_total_num_steps = len(custom_training_data_loader) // batch_size
-    
-    # custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
-    # testing_total_num_steps = len(custom_testing_data_loader) // batch_size
 
-    # Train the models
-    fullModel.train()
-
-    # Optimizers
-    optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=step)
+    if withTestDataset:    
+        # Build the data loader for the testing set
+        custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
 
     # Train the models
     print("\n\n==> Train the models...")
+    fullModel.trainMode()
+
+    # Use Adam optimizer
+    optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=step)
 
     # Display the plot
-    
-    learnPlot = cstm_plot.SmartPlot("Training", "Epochs", "Loss")
-    testPlot = cstm_plot.SmartPlot("Test", "Epochs", "Ratios")
+    learnPlot = cstm_plot.SmartPlot("Training", "Epochs", "Loss", output_plot_path)
+    learnPlot2 = cstm_plot.SmartPlot("Training", "Epochs", "Loss", output_plot_path)
+    testPlot = cstm_plot.SmartPlot("Test", "Epochs", "Ratios", output_plot_path)
 
+    # For each epoch
     for epoch in tqdm(range(totalEpochs)):
 
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
-        train_learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, training_total_num_steps, output_models_path, learnPlot)
+        # Learn
+        learn(custom_training_data_loader, device, optimizer, fullModel, epoch, totalEpochs, output_models_path, learnPlot, learnPlot2)
 
-        # Save the plot
-        learnPlot.build()
+        if withTestDataset:
+            # test
+            eval(custom_testing_data_loader, device, vocabulary, fullModel, epoch, spacyEn, testPlot)
 
-        # train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, testPlot)
+    # Save the plots
+    learnPlot.build()
+    learnPlot2.build()
 
-        # Save the plot
+    if withTestDataset:
         testPlot.build()
 
-    # Save the plot
-    learnPlot.build()
-    testPlot.build()
-
-def testAll(vocabulary, fullModel, images_path, captions_path, device, transform, spacyEn):
-
-    # Build data loader
-    batch_size = 128
-    
-    custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
-    testing_total_num_steps = len(custom_testing_data_loader) // batch_size
+def testAll(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, batch_size, images_path, captions_path : str , device, transform, spacyEn, withTestDataset=True, withTrainDataset=True):
+    """ Test the test dataset or the training dataset with the model """
 
     # Train the models
-    fullModel.test()
+    fullModel.evalMode()
 
-    # Train the models
-    print("\n\n==> Test the model...")
-    
-    totalEpochs = 5
+    if withTrainDataset:
+        # Build the data loader for the training set
 
-    # Display the plot
-    plot = cstm_plot.cstm_plot.SmartPlot("[Test] : Ratios", "Epochs", "Ratios")
+        print("\n\n==> Evaluating the train model...")
+        custom_training_data_loader = get_loader(images_path[0]["output"], captions_path[0], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+        eval(custom_training_data_loader, device, vocabulary, fullModel, 0, spacyEn, None)
 
-    for epoch in tqdm(range(totalEpochs)):
+    if withTestDataset:    
+        # Build the data loader for the testing set
 
-        print("\n\n==> Epoch " + str(epoch) + "...", end="")
-
-        train_test(custom_testing_data_loader, device, vocabulary, fullModel, batch_size, epoch, totalEpochs, testing_total_num_steps, spacyEn, plot)
-
-        # Save the plot
-        plot.build()
-
-    # Save the plot
-    plot.build()
+        print("\n\n==> Evaluating the test model...")
+        custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+        eval(custom_testing_data_loader, device, vocabulary, fullModel, 0, spacyEn, None)

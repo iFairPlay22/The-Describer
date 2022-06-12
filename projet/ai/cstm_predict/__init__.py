@@ -1,28 +1,14 @@
-import os
-from tqdm import tqdm
-import nltk
-import pickle
-import numpy as np
-from PIL import Image
-from collections import Counter
-from pycocotools.coco import COCO
-import matplotlib.pyplot as plt
- 
 import torch
-import torch.nn as nn
-import torch.utils.data as data
-from torchvision import transforms
-import torchvision.models as models
-import torchvision.transforms as transforms
-from torch.nn.utils.rnn import pack_padded_sequence
-
-import cstm_model as cstm_model
 import cstm_load as cstm_load
+import cstm_model as cstm_model
 
-def predict(img_tensor, vocabulary, fullModel):
+def predict(img_tensor, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel):
+    """ Predict the caption for an image """
+
+    print("\n\n ==> Make a prediction\n")
     
     # We don't train the models
-    fullModel.eval()
+    fullModel.evalMode()
 
     res = dict()
 
@@ -35,12 +21,12 @@ def predict(img_tensor, vocabulary, fullModel):
         n_predicted_caption = []
         for sampled_indices in n_sampled_indices:
             predicted_caption = vocabulary.translate(sampled_indices.cpu().numpy())
-            n_predicted_caption.append(' '.join(predicted_caption))
+            n_predicted_caption.append(predicted_caption)
 
         res["indices"] = n_sampled_indices
-        res["words"] = n_predicted_caption
+        res["words"] = " ".join(n_predicted_caption)
 
     # We train the models
-    fullModel.train()
+    fullModel.trainMode()
 
     return res

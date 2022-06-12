@@ -1,25 +1,30 @@
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 from datetime import datetime
 import os
 
+# Displays a plot 
 class SmartPlot:
 
-    def __init__(self, title="percentage_plot", x_label="x_label", y_label="y_label"):
-
+    def __init__(self, title="percentage_plot", x_label="x_label", y_label="y_label", output_path="./output"):
+        """ Creates the plot """
+        
         self.__data = {}
         self.__title = title
         self.__x_label = x_label
         self.__y_label = y_label
+        self.__output_path = output_path
 
-    def addPoint(self, label, color, value):
+    def addPoint(self, label : str, color : str, value : float):
+        """ Add a point to the plot """
+
         if label not in self.__data:
             self.__data[label] = { "color": color, "data": [] }
 
         self.__data[label]["data"].append(value)
 
     def build(self):
+        """ Add the title, legend, labels and store the plot in a file """
+
         self.__fig, self.__ax = plt.subplots()
 
         for label, k in self.__data.items():
@@ -29,15 +34,16 @@ class SmartPlot:
         self.__ax.set_ylabel(self.__y_label)
         self.__ax.set_title(self.__title)
 
-        if not os.path.exists("./output"):
-            os.makedirs("./output")
+        if not os.path.exists(self.__output_path):
+            os.makedirs(self.__output_path)
         
 
-        fileName = './output/plot_' + str(datetime.now())[0:19] + "_" + self.__title 
+        fileName = self.__output_path + '/plot_' + str(datetime.now())[0:19] + "_" + self.__title 
         fileName = fileName.replace("-", "_").replace(":", "_").replace(" ", "_")
         self.__fig.savefig(fileName + '.png')
 
     def show():
+        """ Display all the plots """
         plt.show()
 
 if __name__ == "__main__":

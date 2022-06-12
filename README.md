@@ -44,7 +44,7 @@ Création d'un écosystème d'aide aux personnes malvoyantes composé :
 
 > `install` : 
 > - Prérequis :  Téléchargement de la **base de données COCO** (datasets d'images et de libellés) dans le répertoire `./projet/ai/datadir`. Vous pouvez utiliser le **makefile** (`./projet/ai/Makefile` avec la commande `make`), qui permets de télécharger les datasets, ainsi que les librairies python nécessaires de manière automatique. 
-> - NB : Attention a bien installer la bonne version de `pytorch`. Privilégiez l'installation du mode `CUDA`, qui vous permettra d'augmenter grandement les temps de calculs, en utilisant le **GPU** de votre ordinateur.
+> - NB : Attention a bien installer la bonne version de `pytorch`. Privilégiez l'installation du mode `CUDA`, si jamais votre poste a une carte graphique `NVIDIA`, ce qui vous permettra d'augmenter grandement les temps de calculs, en utilisant le **GPU** de votre ordinateur.
 > - Fonction : Charge un **vocabulaire** des différents mots prédictibles à partir des différents labels du dataset, applique des **transformations**, **redimentionne** l'ensemble des images et les **sauvegarde** dans le répertoire `./projet/ai/datadir`/
 
 > `train`

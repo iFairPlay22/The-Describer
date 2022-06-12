@@ -2,23 +2,16 @@ import os
 from tqdm import tqdm
 import nltk
 import pickle
-import numpy as np
 from PIL import Image
 from collections import Counter
 from pycocotools.coco import COCO
-import matplotlib.pyplot as plt
- 
-import torch
-import torch.nn as nn
-import torch.utils.data as data
-from torchvision import transforms
-import torchvision.models as models
-import torchvision.transforms as transforms
-from torch.nn.utils.rnn import pack_padded_sequence
 
 class Vocab(object):
-    """Simple vocabulary wrapper."""
+    """ Vocabulary wrapper """
+
     def __init__(self):
+        """ Create a new Vocabulary. """
+
         # Word to index
         self.__w2i = {}
 
@@ -28,28 +21,34 @@ class Vocab(object):
         # Current index
         self.__index = 0
  
-    # Get the token, of <unk> if not exists
-    def __call__(self, token):
+    def __call__(self, token : str):
+        """ Get the index of the token, of <unk> if not exists """
+
         if not token in self.__w2i:
             return self.__w2i['<unk>']
 
         return self.__w2i[token]
 
-    def getToken(self, index):
+    def getToken(self, index : int):
+        """ Get the token that corresponds to the index """
+
         return self.__i2w[index]
  
-    # Get the length of the vocabulary
     def __len__(self):
+        """ Get the length of the vocabulary """
+
         return len(self.__w2i)
 
-    # Add a word to the vocabulary
-    def add_token(self, token):
+    def add_token(self, token : str):
+        """ Add a token to the vocabulary """
+
         if not token in self.__w2i:
             self.__w2i[token] = self.__index
             self.__i2w[self.__index] = token
             self.__index += 1
 
-    def translate(self, sentence):
+    def translate(self, sentence : list):
+        """ Translate list of indexes to a sentance (list of tokens) """
 
         words = []
         for word in sentence:
@@ -60,21 +59,23 @@ class Vocab(object):
 
         return " ".join(words)
 
-    def save(self, output):
+    def save(self, output : str):
+        """ Save the vocabulary wrapper """
         
         print("\n\nSave the vocabulary wrapper to '{}'".format(output))
         with open(output, 'wb') as f:
             pickle.dump(self, f)
 
-    def load(output):
+    def load(output : str):
+        """ Load the vocabulary wrapper """
     
         print("\n\nLoad the vocabulary wrapper from '{}'".format(output))
         with open(output, 'rb') as f:
             return pickle.load(f)
 
 # Step 1: Build the vocabulary wrapper and save it to disk.
-
-def build_vocabulary(json, threshold):
+def build_vocabulary(json, threshold=4):
+    """ Construct the vocabulary wrapper and return it """
 
     # Load JSON
     coco = COCO(json)
@@ -84,7 +85,6 @@ def build_vocabulary(json, threshold):
     counter = Counter()
     
     # For every caption ids
-    
     for id in tqdm(ids):
 
         # Get the caption
@@ -98,31 +98,35 @@ def build_vocabulary(json, threshold):
  
     # Create a vocab wrapper and add some special tokens.
     vocab = Vocab()
-    vocab.add_token('<pad>')
-    vocab.add_token('<start>')
-    vocab.add_token('<end>')
-    vocab.add_token('<unk>')
+    vocab.add_token('<pad>')    # \n
+    vocab.add_token('<start>')  # start
+    vocab.add_token('<end>')    # end
+    vocab.add_token('<unk>')    # unknowed word (not exists in the vocabulary i.e.)
 
-    # Keep the topens that appears more than threshold 
+    # Keep the tokens that appears more than threshold 
     for token, cnt in counter.items():
         if threshold <= cnt:
             vocab.add_token(token)
         
     return vocab
 
-def store_vocabulary(input, output):
 
-    print("\n\n==> store_vocabulary()")
+def build_and_store_vocabulary(input : str, output : str):
+    """ Build the vocabulary wrapper and save it to disk """
+
+    print("\n\n==> build_and_store_vocabulary()")
 
     print("Load the data from '{}'".format(input))
-    vocab = build_vocabulary(json=input, threshold=4)
+    vocab = build_vocabulary(input)
     print("Total vocabulary size: {}".format(len(vocab)))
 
     vocab.save(output)
 
 # Step 2: Resize the images
 
-def load_image(input_image_file_path, device, transform=None):
+def load_image(input_image_file_path : str, device, transform=None):
+    """ Load and transform an image """
+
     img = Image.open(input_image_file_path)
     img = img.resize([224, 224], Image.LANCZOS).convert('RGB')
     
@@ -132,10 +136,13 @@ def load_image(input_image_file_path, device, transform=None):
     return img.to(device)
 
 def reshape_image(image, shape):
+    """ Reshape an image """
+    
     # Resize an image to the given shape
     return image.resize(shape, Image.ANTIALIAS)
  
 def reshape_images(io, shape):
+    """ Reshape all images in a dataset """
 
     print("\n\n==> reshape_images()")
     
@@ -151,6 +158,7 @@ def reshape_images(io, shape):
             
         print("Resize images in path '{}'".format(output))
     
+        # For every image in the input directory
         images = os.listdir(input)
         for im in tqdm(images):
 
@@ -160,5 +168,5 @@ def reshape_images(io, shape):
                     # Reshape them
                     image = reshape_image(image, shape)
 
-                    # Save them
+                    # Save them to the output directory
                     image.save(os.path.join(output, im), image.format)

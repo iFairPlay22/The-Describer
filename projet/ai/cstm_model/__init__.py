@@ -1,27 +1,18 @@
 import os
-from tqdm import tqdm
-import nltk
-import pickle
-import numpy as np
-from PIL import Image
-from collections import Counter
-from pycocotools.coco import COCO
-import matplotlib.pyplot as plt
 from datetime import datetime
- 
 import torch
 import torch.nn as nn
-import torch.utils.data as data
-from torchvision import transforms
 import torchvision.models as models
-import torchvision.transforms as transforms
 from torch.nn.utils.rnn import pack_padded_sequence
 
 # Step 1 : CNN
 
 class CNNModel(nn.Module):
+    """ CNN Model """
 
     def __init__(self, embedding_size):
+        """ Initialize the model """
+
         super(CNNModel, self).__init__()
 
         print("\n\n==> InItializating CNNModel()")
@@ -43,7 +34,6 @@ class CNNModel(nn.Module):
 
         # We don't train the ResNet model because it is pretrained
         #   The output of the ResNet model is K x l000-dimensional, assuming K number of neurons in the penultimate layer
-
         with torch.no_grad():
             resnet_features = self.__resnet_module(input_images)
 
@@ -64,13 +54,18 @@ class CNNModel(nn.Module):
         return final_features
 
     def getAllParameters(self):
+        """Return all the parameters of the model (used for Adam optimization)"""
+
         return list(self.__linear_layer.parameters()) + list(self.__batch_norm.parameters())
 
 # Step 2 : LSTM
 
 class LSTMModel(nn.Module):
+    """ LSTM Model """
 
     def __init__(self, embedding_size, hidden_layer_size, vocabulary_size, num_layers, max_seq_len=20):
+        """ Initialize the model """
+
         super(LSTMModel, self).__init__()
 
         print("\n\n==> InItializating LSTMModel()")
@@ -127,14 +122,18 @@ class LSTMModel(nn.Module):
         return sampled_indices
 
     def getAllParameters(self):
+        """ Return all the parameters of the model (used for Adam optimization) """
+        
         return list(self.parameters())
 
 # Step 3 : CNN & LSTM
 
 class FullModel(nn.Module):
+    """ Full Model : CNN & LSTM """
 
     def __init__(self, device, image_shape, vocabulary):
         """Combine the CNN and LSTM models."""
+        
         super(FullModel, self).__init__()
 
         # Build the models
@@ -145,6 +144,7 @@ class FullModel(nn.Module):
         self.__loss_criterion = nn.CrossEntropyLoss()
 
     def forward(self, images, captions, lens):
+        """ Forward pass through the network. """
 
         feats   = self.__encoder_model(images)
         outputs = self.__decoder_model(feats, captions, lens)
@@ -152,59 +152,77 @@ class FullModel(nn.Module):
         return outputs
 
     def sample(self, image):
+        """ Make a prediction for a single image. """
 
         feats = self.__encoder_model(image)
         return self.__decoder_model.sample(feats)
 
     def loss(self, outputs, tgts):
+        """ Compute the loss. """
 
         # outputs = F.softmax(outputs, dim=1)
         return self.__loss_criterion(outputs, tgts)
 
     # def zero_grad(self):
+    #     """ Zero the gradients for the model. """
+    #
     #     self.__decoder_model.zero_grad()
     #     self.__encoder_model.zero_grad()
 
     def getAllParameters(self):
+        """  Return all the parameters of the model (used for Adam optimization) """
+
         return self.__decoder_model.getAllParameters() + self.__encoder_model.getAllParameters()
 
-    def save(self, output_models_path, epoch, batch_id):
+    def save(self, output_models_path : str, epoch : int):
+        """ Save the values of the model : encoder + decoder. """
 
+        # Get the current time
         dateString = str(datetime.now())[0:19].replace("-", "_").replace(":", "_").replace(" ", "_") + "_"
 
+        # Save the encoder model
         torch.save(
             self.__decoder_model.state_dict(), 
-            os.path.join(output_models_path, 'decoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
+            os.path.join(output_models_path, 'decoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1))
         )
 
+        # Save the decoder model
         torch.save(
             self.__encoder_model.state_dict(), 
-            os.path.join(output_models_path, 'encoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1, batch_id + 1))
+            os.path.join(output_models_path, 'encoder_{}_{}_{}.ckpt'.format(dateString, epoch + 1))
         )
 
-    def load(self):
+    def load(self, input_models_path : str):
+        """ Load the values of the model : encoder + decoder. """
 
-        decoderFile = ''
-        encoderFile = ''
+        # Find the latest model
+        files = os.listdir(input_models_path)
+        decoderFile = None
+        encoderFile = None
 
-        files = os.listdir('models_dir')
-        
         for filename in files:
-            if(filename.startswith('decoder')):
-                decoderFile = filename
-            if(filename.startswith('encoder')):
-                encoderFile = filename
+            if filename.endswith('.ckpt'):
+                if filename.startswith('decoder'):
+                    decoderFile = filename
+                if filename.startswith('encoder'):
+                    encoderFile = filename
 
         if encoderFile and decoderFile:
-            self.__encoder_model.load_state_dict(torch.load('models_dir/' + encoderFile))
-            self.__decoder_model.load_state_dict(torch.load('models_dir/' + decoderFile))
-            print("\n\n==> Loaded models from {} and {}".format(encoderFile, decoderFile))
 
+            # Load the encoder model and the decoder model
+            self.__encoder_model.load_state_dict(torch.load(input_models_path + encoderFile))
+            self.__decoder_model.load_state_dict(torch.load(input_models_path + decoderFile))
+            print("\n\n==> Loading models via FullModel.load()")
+            print("Loaded models from {} and {}".format(encoderFile, decoderFile))
 
     def trainMode(self):
+        """ Set the model in training mode : use batch_size """
+
         self.__encoder_model.train()
         self.__decoder_model.train()
 
-    def testMode(self):
+    def evalMode(self):
+        """ Set the model in training mode : image per image """
+
         self.__encoder_model.eval()
         self.__decoder_model.eval()
