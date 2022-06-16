@@ -201,7 +201,7 @@ export default {
                 redirect: 'follow'
             };
 
-            this.apiRequest(this.data.backendApi + "/iadecode/from_file" + this.data.userLocale, requestOptions);
+            this.apiRequest(this.data.backendApi + "/iadecode/from_file/" + this.data.userLocale, requestOptions);
         },
         apiRequest(url, options) {
 
