@@ -6,24 +6,26 @@ import time
 from IADecode import IADecode
 import urllib.request
 from flask_cors import CORS
-
+from queue import Queue
+from dotenv import load_dotenv, dotenv_values
 app = Flask(__name__)
 CORS(app)
 
 app.config['UPLOAD_FOLDER'] = "images/"
 ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'tiff', 'bmp', 'webp'}
 CKPT_FILES_TOKENS = {"encoder": "LJwDPw", "decoder": "mFlRWR"}
-decoder = None
+decoders = [None]*4
+decodersUsed = [False]*4
 
 
 def downloadFile(path, outputpath):
-    print("Downloading file from: " + path)
+    # print("Downloading file from: " + path)
     opener = urllib.request.build_opener()
     opener.addheaders = [
         ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36')]
     urllib.request.install_opener(opener)
     urllib.request.urlretrieve(path, outputpath)
-    print("Downloaded to: " + outputpath)
+    # print("Downloaded to: " + outputpath)
 
 
 # if not(path.exists("./models_dir")):
@@ -38,21 +40,47 @@ def downloadFile(path, outputpath):
 #                  CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt", "./models_dir/decoder.ckpt")
 
 
+def checkToken(playload):
+    if "token" in playload:
+        config = dotenv_values(".env.local")
+
+        if playload["token"] == config["TOKEN"]:
+            return True
+    return False
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def loadDecoder():
-    global decoder
-    if decoder is None:
-        decoder = IADecode()
+    global decoders
+
+    for i in range(len(decoders)):
+        decoders[i] = IADecode()
+
+
+def selectDecoder():
+    global decodersUsed
+    for i in range(len(decodersUsed)):
+        if not decodersUsed[i]:
+            decodersUsed[i] = True
+            return (decoders[i], i)
+    return None, -1
+
+
+def freeDecoder(i):
+    global decodersUsed
+    decodersUsed[i] = False
 
 
 @app.route('/iadecode/from_file/<lang>', methods=['POST'])
 def from_file(lang):
 
     # Valid Image format and save it to the server
-
+    decoder = None
+    while(decoder == None):
+        decoder, decoder_id = selectDecoder()
     if 'file' not in request.files:
         return "No file in request", 400
     file = request.files['file']
@@ -66,7 +94,11 @@ def from_file(lang):
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(os.path.join(path))
         prediction = decoder.getPrediction(path, lang)
-        os.remove(path)
+        freeDecoder(decoder_id)
+        try:
+            os.remove(path)
+        except:
+            pass
         return {"message": prediction}, 200
     else:
         return "File not allowed", 400
@@ -79,10 +111,14 @@ def from_file(lang):
 @app.route('/iadecode/from_url/<lang>', methods=['POST'])
 def from_url(lang):
 
+    decoder = None
+    while(decoder == None):
+        decoder, decoder_id = selectDecoder()
+
     payload = request.get_json()
 
     path = payload['file']
-    print(path)
+
     extension = os.path.splitext(path)[1].split("?")[0]
     if extension == ".svg":
         return "SVG not supported", 400
@@ -101,10 +137,15 @@ def from_url(lang):
     # Ask AI to decode image
     # Remove image
     prediction = decoder.getPrediction(savePath, lang)
-    os.remove(savePath)
+    freeDecoder(decoder_id)
+    try:
+        os.remove(savePath)
+    except:
+        pass
     return {"message": prediction}, 200
 
 
 if __name__ == "__main__":
+
     loadDecoder()
     app.run()
