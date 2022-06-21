@@ -152,7 +152,7 @@ export default {
             let imgs = [];
 
             while (imgs.length != this.data.proposedImageProperties.total) {
-                const id = this.randomIntFromInterval(1, 63);
+                const id = this.randomIntFromInterval(1, 151);
                 if (!imgs.includes(id))
                     imgs.push(id);
             }
