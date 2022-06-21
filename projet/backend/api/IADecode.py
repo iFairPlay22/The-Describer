@@ -7,6 +7,7 @@ import time
 import torch
 from torchvision import transforms
 import torchvision.transforms as transforms
+from dotenv import dotenv_values
 
 
 class IADecode:
@@ -25,8 +26,9 @@ class IADecode:
                 (0.229, 0.224, 0.225)
             )
         ])
+        config = dotenv_values(".env.local")
         self.translator = deepl.Translator(
-            "ceb1434a-ff88-92ab-b90e-de6e04fca8b3:fx")
+            config["DEEPL_KEY"])
 
         self.fullModel = cstm_model.FullModel(
             self.device, self.image_shape, self.vocabulary)
