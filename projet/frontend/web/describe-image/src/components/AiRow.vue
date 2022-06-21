@@ -28,7 +28,7 @@
 
                             <el-upload action="#" :auto-upload="false" :limit="1" :file-list="uploadedFiles"
                                 :on-change="updateDescriptionByFile">
-                                <el-button type="primary" class="very-small-margin">
+                                <el-button type="primary" class="very-small-margin" :disabled="!canClick">
                                     <i class="el-icon-upload"></i>
                                     {{ data.strings.uploadButtonText }}
                                 </el-button>
@@ -49,7 +49,7 @@
                             <el-image
                                 :style="'width: ' + data.proposedImageProperties.width + 'px;' + 'height:' + data.proposedImageProperties.height + 'px;'"
                                 v-for="(proposedImage, i) in proposedImages" :key="i" :src="proposedImage" fit="cover"
-                                class="small-image" @click="updateDescriptionByUrl(proposedImage)" />
+                                :class='"small-image " + (canClick ? "small-image-clickable" : "")' @click="updateDescriptionByUrl(proposedImage)" />
                         </div>
                     </el-card>
                 </el-col>
@@ -93,11 +93,15 @@ export default {
                         type: String,
                         default: "",
                     },
-                    badFileFormatMessage: {
+                    badFileMessage: {
                         type: String,
                         default: "",
                     },
                     errorMessage: {
+                        type: String,
+                        default: "",
+                    },
+                    pleaseWaitMessage: {
                         type: String,
                         default: "",
                     },
@@ -130,6 +134,7 @@ export default {
     },
     data() {
         return {
+            canClick: true,
             currentImage: "/images/big/big_surf.jpg",
             currentDescription: "Un homme chevauchant une vague sur une planche de surf.",
             proposedImages: [],
@@ -166,7 +171,18 @@ export default {
             this.currentImage = image;
             this.currentDescription = this.data.strings.processingText;
         },
+        canContinue() {
+            if (!this.canClick) {
+                this.$message.warning({ message: this.data.strings.alerts.pleaseWaitMessage, center: true, showClose: true, duration: 10000 });
+                return false;
+            }
+            this.canClick = false;
+            return true;
+        },
         updateDescriptionByUrl(url) {
+
+            if (!this.canContinue())
+                return
 
             this.updateImage(url);
 
@@ -185,6 +201,9 @@ export default {
             this.apiRequest(this.data.backendApi + "/iadecode/from_url/" + this.data.userLocale, requestOptions);
         },
         updateDescriptionByFile(image) {
+
+            if (!this.canContinue())
+                return
 
             if (!image) return
             image = image.raw
@@ -214,13 +233,16 @@ export default {
                                 this.$message.success({ message: this.data.strings.alerts.successMessage, center: true, showClose: true, duration: 10000 });
                             })
                             .catch(() => {
-                                this.$message.success({ message: this.data.strings.alerts.badFileFormatMessage, center: true, showClose: true, duration: 10000 });
+                                this.$message.success({ message: this.data.strings.alerts.badFileMessage, center: true, showClose: true, duration: 10000 });
                                 this.currentDescription = this.data.strings.errorText;
-                            });
+                            })
                     }
                 })
                 .catch(() => {
                     this.$message.error({ message: this.data.strings.alerts.errorMessage, center: true, showClose: true, duration: 10000 });
+                })
+                .finally(() => {
+                    this.canClick = true;
                 });
         }
     },

@@ -161,10 +161,13 @@ body {
     border-radius: 2px !important;
     margin: 5px !important;
     transition: all .2s ease-in-out !important;
+}
+
+.small-image-clickable {
     cursor: pointer !important;
 }
 
-.small-image:hover {
+.small-image-clickable:hover {
     box-shadow: 0 0 5px black !important; 
     transform: scale(1.05) !important;
 }

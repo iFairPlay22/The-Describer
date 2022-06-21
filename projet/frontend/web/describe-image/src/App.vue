@@ -76,8 +76,9 @@ export default {
           errorText: "Une erreur est survenue...",
           alerts: {
             successMessage: "Description effectuée avec succès !",
-            badFileFormatMessage: "Format de fichiers non pris en charge...",
-            errorMessage: 'Une erreur inattendue est survenue ! 👀'
+            badFileMessage: "Fichier trop lourd, où format non pris en charge...",
+            errorMessage: 'Une erreur inattendue est survenue ! 👀',
+            pleaseWaitMessage: 'Veuillez attendre quelques secondes... 🥴'
           }
         },
         proposedImageProperties: {
