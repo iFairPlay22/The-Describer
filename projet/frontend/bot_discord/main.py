@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 # Get bot token
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN_API = os.getenv('TOKEN')
 
 # Init Bot
 bot = commands.Bot(command_prefix='!')
@@ -87,8 +88,8 @@ async def on_message(message):
 # Call backend API to get image description from file url
 async def request_from_url(message, url):
     await message.channel.send('Processing ...')
-
-    res = requests.post('https://www.loicfournier.fr/iadecode/from_url/'+bot.language, json={'file': url})
+    headers = {"Authorization": TOKEN_API}
+    res = requests.post('https://www.loicfournier.fr/iadecode/from_url/'+bot.language, headers=headers, json={'file': url})
         
     if(res.status_code == 200):
         embedMsg = discord.Embed(title="", description=res.json()['message'].capitalize(), color=0xff0000)
