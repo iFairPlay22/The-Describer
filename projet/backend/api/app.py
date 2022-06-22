@@ -8,6 +8,7 @@ import urllib.request
 from flask_cors import CORS
 from queue import Queue
 from dotenv import load_dotenv, dotenv_values
+import Statistique
 app = Flask(__name__)
 CORS(app)
 
@@ -74,21 +75,36 @@ def freeDecoder(i):
     decodersUsed[i] = False
 
 
+@app.route('/statistique', methods=['GET'])
+def getStat():
+    return Statistique.getData(), 200
+
+
 @app.route('/iadecode/from_file/<lang>', methods=['POST'])
 def from_file(lang):
 
     # Valid Image format and save it to the server
+    if not checkToken(request.get_json()):
+        Statistique.addStatistique("from_file", 403, "No read")
+        return "Forbidden", 403
+
     decoder = None
     while(decoder == None):
         decoder, decoder_id = selectDecoder()
     if 'file' not in request.files:
+        Statistique.addStatistique("from_file", 200, "No file")
         return "No file in request", 400
     file = request.files['file']
     # If the user does not select a file, the browser submits an
     # empty file without a filename.
     if file.filename == '':
+        Statistique.addStatistique("from_file", 400, file.filename)
         return "No file selected", 400
 
+    track_event(
+        category='Example',
+        action='test action',
+        value='file.filename')
     if file and allowed_file(file.filename):
         filename = file.filename  # secure_filename(file.filename)
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -99,8 +115,10 @@ def from_file(lang):
             os.remove(path)
         except:
             pass
+        Statistique.addStatistique("from_file", 200, file.filename)
         return {"message": prediction}, 200
     else:
+        Statistique.addStatistique("from_url", 400, file.filename)
         return "File not allowed", 400
 
     # Ask AI to decode image
@@ -110,6 +128,10 @@ def from_file(lang):
 
 @app.route('/iadecode/from_url/<lang>', methods=['POST'])
 def from_url(lang):
+
+    if not checkToken(request.get_json()):
+        Statistique.addStatistique("from_url", 403, path)
+        return "Forbidden", 403
 
     decoder = None
     while(decoder == None):
@@ -121,6 +143,7 @@ def from_url(lang):
 
     extension = os.path.splitext(path)[1].split("?")[0]
     if extension == ".svg":
+        Statistique.addStatistique("from_url", 400, path)
         return "SVG not supported", 400
 
     # Download image
@@ -136,12 +159,14 @@ def from_url(lang):
 
     # Ask AI to decode image
     # Remove image
+    print("prediction start")
     prediction = decoder.getPrediction(savePath, lang)
     freeDecoder(decoder_id)
     try:
         os.remove(savePath)
     except:
         pass
+    Statistique.addStatistique("from_url", 200, path)
     return {"message": prediction}, 200
 
 
