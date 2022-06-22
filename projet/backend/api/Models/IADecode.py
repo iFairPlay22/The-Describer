@@ -1,3 +1,4 @@
+from Services.TranslatorService import Translator
 from cstm_load import Vocab
 import cstm_load as cstm_load
 import cstm_predict as cstm_predict
@@ -8,6 +9,7 @@ import torch
 from torchvision import transforms
 import torchvision.transforms as transforms
 from dotenv import dotenv_values
+# //ouverture@boursorama.fr
 
 
 class IADecode:
@@ -26,10 +28,7 @@ class IADecode:
                 (0.229, 0.224, 0.225)
             )
         ])
-        config = dotenv_values(".env.local")
-        self.translator = deepl.Translator(
-            config["DEEPL_KEY"])
-
+        self.translator = Translator()
         self.fullModel = cstm_model.FullModel(
             self.device, self.image_shape, self.vocabulary)
         self.fullModel.load()
@@ -65,11 +64,8 @@ class IADecode:
         predicted_sentence = predicted_sentence.replace('<end>', '')
 
         duration2 = time.time() - start
-        trad_lang = self.checkSupportedLanguage(trad_lang)
-        if(trad_lang != None):
-            translated_sentence = self.translator.translate_text(
-                predicted_sentence, target_lang=trad_lang)
-            predicted_sentence = translated_sentence.text
+        predicted_sentence = self.translator.translate(
+            predicted_sentence, trad_lang)
         duration = time.time() - start
         print("Time taken: " + str(duration) + "  "+str(duration2))
         return predicted_sentence

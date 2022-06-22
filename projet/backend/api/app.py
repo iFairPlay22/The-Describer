@@ -1,176 +1,86 @@
+from Models.IADecodeManager import IADecodeManager
+from Services import AuthService, ImageService, StatistiqueService
 from flask import Flask, request
-import os
-import os.path
-from os import path
-import time
-from IADecode import IADecode
-import urllib.request
 from flask_cors import CORS
-from queue import Queue
 from dotenv import load_dotenv, dotenv_values
-import Statistique
+import os
+
 app = Flask(__name__)
 CORS(app)
-
 app.config['UPLOAD_FOLDER'] = "images/"
-ALLOWED_EXTENSIONS = {'png', 'jpeg', 'jpg', 'tiff', 'bmp', 'webp'}
-CKPT_FILES_TOKENS = {"encoder": "LJwDPw", "decoder": "mFlRWR"}
-decoders = [None]*4
-decodersUsed = [False]*4
 
-
-def downloadFile(path, outputpath):
-    # print("Downloading file from: " + path)
-    opener = urllib.request.build_opener()
-    opener.addheaders = [
-        ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36')]
-    urllib.request.install_opener(opener)
-    urllib.request.urlretrieve(path, outputpath)
-    # print("Downloaded to: " + outputpath)
-
-
-# if not(path.exists("./models_dir")):
-#     os.mkdir("./models_dir")
-
-# if not(path.exists("./models_dir/encoder.ckpt")):
-#     downloadFile("https://transfer.sh/" +
-#                  CKPT_FILES_TOKENS["encoder"] + "/encoder.ckpt", "./models_dir/encoder.ckpt")
-
-# if not(path.exists("./models_dir/decoder.ckpt")):
-#     downloadFile("https://transfer.sh/" +
-#                  CKPT_FILES_TOKENS["decoder"] + "/decoder.ckpt", "./models_dir/decoder.ckpt")
-
-
-def checkToken(playload):
-    if "token" in playload:
-        config = dotenv_values(".env.local")
-
-        if playload["token"] == config["TOKEN"]:
-            return True
-    return False
-
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def loadDecoder():
-    global decoders
-
-    for i in range(len(decoders)):
-        decoders[i] = IADecode()
-
-
-def selectDecoder():
-    global decodersUsed
-    for i in range(len(decodersUsed)):
-        if not decodersUsed[i]:
-            decodersUsed[i] = True
-            return (decoders[i], i)
-    return None, -1
-
-
-def freeDecoder(i):
-    global decodersUsed
-    decodersUsed[i] = False
+global DecoderManager
 
 
 @app.route('/statistique', methods=['GET'])
 def getStat():
-    return Statistique.getData(), 200
+    return StatistiqueService.getData(), 200
 
 
 @app.route('/iadecode/from_file/<lang>', methods=['POST'])
 def from_file(lang):
 
     # Valid Image format and save it to the server
-    if not checkToken(request.get_json()):
-        Statistique.addStatistique("from_file", 403, "No read")
+    if not AuthService.verify_token(request.headers):
         return "Forbidden", 403
 
-    decoder = None
-    while(decoder == None):
-        decoder, decoder_id = selectDecoder()
     if 'file' not in request.files:
-        Statistique.addStatistique("from_file", 200, "No file")
         return "No file in request", 400
+
     file = request.files['file']
-    # If the user does not select a file, the browser submits an
-    # empty file without a filename.
     if file.filename == '':
-        Statistique.addStatistique("from_file", 400, file.filename)
         return "No file selected", 400
 
-    track_event(
-        category='Example',
-        action='test action',
-        value='file.filename')
-    if file and allowed_file(file.filename):
-        filename = file.filename  # secure_filename(file.filename)
-        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if file and ImageService.allowed_file(file.filename):
+
+        path = os.path.join(app.config['UPLOAD_FOLDER'],  file.filename)
         file.save(os.path.join(path))
-        prediction = decoder.getPrediction(path, lang)
-        freeDecoder(decoder_id)
+        prediction = DecoderManager.getPrediction(path, lang)
+
         try:
             os.remove(path)
         except:
             pass
-        Statistique.addStatistique("from_file", 200, file.filename)
+
         return {"message": prediction}, 200
     else:
-        Statistique.addStatistique("from_url", 400, file.filename)
         return "File not allowed", 400
-
-    # Ask AI to decode image
-
-    # Remove image
 
 
 @app.route('/iadecode/from_url/<lang>', methods=['POST'])
 def from_url(lang):
 
-    if not checkToken(request.get_json()):
-        Statistique.addStatistique("from_url", 403, path)
+    if not AuthService.verify_token(request.headers):
         return "Forbidden", 403
 
-    decoder = None
-    while(decoder == None):
-        decoder, decoder_id = selectDecoder()
-
     payload = request.get_json()
-
     path = payload['file']
 
-    extension = os.path.splitext(path)[1].split("?")[0]
-    if extension == ".svg":
-        Statistique.addStatistique("from_url", 400, path)
+    fileName = ImageService.validFileAndFileName(path)
+    if(fileName == None):
         return "SVG not supported", 400
 
-    # Download image
-    fileName = str(round(time.time() * 1000))
-    fileName = fileName.replace("-", "").replace(":", "").replace(" ", "_")
-    if extension != "" and extension != None:
-        fileName = fileName + extension
-    else:
-        fileName = fileName + ".jpg"
-
     savePath = os.path.join(app.config['UPLOAD_FOLDER'], fileName)
-    downloadFile(path, savePath)
+    ImageService.downloadFile(path, savePath)
 
-    # Ask AI to decode image
-    # Remove image
-    print("prediction start")
-    prediction = decoder.getPrediction(savePath, lang)
-    freeDecoder(decoder_id)
+    prediction = DecoderManager.getPrediction(savePath, lang)
+
     try:
         os.remove(savePath)
     except:
         pass
-    Statistique.addStatistique("from_url", 200, path)
+
     return {"message": prediction}, 200
+
+
+@app.after_request
+def after_request_func(response):
+    StatistiqueService.addStatistique(
+        request.url, response.status_code)
+    return response
 
 
 if __name__ == "__main__":
 
-    loadDecoder()
+    DecoderManager = IADecodeManager(4)
     app.run()

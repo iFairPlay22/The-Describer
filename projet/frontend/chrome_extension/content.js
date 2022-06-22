@@ -1,11 +1,11 @@
 var getAltBalise = async (image, userLocale) => {
   var myHeaders = new Headers();
+  myHeaders.append("Authorization", "Bearer mbzy52iNo9bo6sGYXL6WGacc9LQz1mvv");
   myHeaders.append("Content-Type", "application/json");
   let src = image.src;
 
   var raw = JSON.stringify({
     file: src,
-    token: "mbzy52iNo9bo6sGYXL6WGacc9LQz1mvv",
   });
 
   var requestOptions = {

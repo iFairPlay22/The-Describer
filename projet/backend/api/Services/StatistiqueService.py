@@ -1,30 +1,36 @@
 import json
 from datetime import datetime
 
+FILEPATH = "./Assets/statistique.json"
 
-def addStatistique(url, response, fileName):
+
+def addStatistique(url, response):
     try:
-        with open('example.json', 'r') as myfile:
+        with open(FILEPATH, 'r') as myfile:
             data = myfile.read()
 
         # parse file
         obj = json.loads(data)
-        obj["from_url"].append({
+        if(url not in obj):
+            print(obj)
+            obj[url] = []
+            print("toto")
+        obj[url].append({
             "date":  datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
             "response": response,
-            "fileName": fileName
         })
 
-        with open('example.json', 'w') as outfile:
+        with open(FILEPATH, 'w') as outfile:
             json.dump(obj, outfile)
 
-    except:
+    except Exception:
+        print(Exception)
         pass
 
 
 def getData():
     try:
-        with open('example.json', 'r') as myfile:
+        with open(FILEPATH, 'r') as myfile:
             data = myfile.read()
         return data
     except:
