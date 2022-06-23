@@ -48,7 +48,7 @@ if __name__ == "__main__":
     # Images
     image_shape = [256, 256]
     transform = transforms.Compose([ 
-        transforms.RandomCrop(224),
+        transforms.CenterCrop(224),
         transforms.RandomHorizontalFlip(), 
         transforms.ToTensor(), 
         transforms.Normalize(

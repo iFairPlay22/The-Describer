@@ -126,6 +126,10 @@ export default {
                 type: String,
                 default: "",
             },
+            backendToken: {
+                type: String,
+                default: ""
+            },
             userLocale: {
                 type: String,
                 default: "",
@@ -188,6 +192,7 @@ export default {
 
             var myHeaders = new Headers();
             myHeaders.append("Content-Type", "application/json");
+            myHeaders.append("Authorization", "Bearer " + this.data.backendToken);
 
             var raw = JSON.stringify({ "file": this.currentImage });
 
@@ -211,11 +216,15 @@ export default {
 
             this.updateImage(URL.createObjectURL(image));
 
+            var myHeaders = new Headers();
+            myHeaders.append("Authorization", "Bearer " + this.data.backendToken);
+
             var formdata = new FormData();
             formdata.append("file", image);
 
             var requestOptions = {
                 method: 'POST',
+                headers: myHeaders,
                 body: formdata,
                 redirect: 'follow'
             };

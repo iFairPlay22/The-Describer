@@ -87,6 +87,7 @@ export default {
           height: 150
         },
         backendApi: "https://www.loicfournier.fr",
+        backendToken: "mbzy52iNo9bo6sGYXL6WGacc9LQz1mvv",
         userLocale: "en",
       },
       title3Data: {
