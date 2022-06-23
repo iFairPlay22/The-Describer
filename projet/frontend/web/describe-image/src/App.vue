@@ -3,20 +3,7 @@
     <main-header :data="headerData" />
 
     <div id="body">
-      <el-image
-        style="
-          width: 200px; 
-          height: 200px;
-          position: fixed;
-          right: 0;
-          top: 0;
-          z-index: 100;
-        "
-        src="/images/logos/qr_code.png"
-        fit="cover"
-        class="small-image"
-      />
-
+      <absolute-qr-code :data="qrCodeData"/>
       <big-text :data="title1Data" />
       <description-row :data="descriptionData" />
       <big-text :data="title2Data" />
@@ -29,6 +16,7 @@
 
 
 <script>
+import AbsoluteQrCode from './components/AbsoluteQrCode.vue';
 import MainHeader from './components/MainHeader.vue';
 import DescriptionRow from './components/DescriptionRow.vue';
 import AiRow from './components/AiRow.vue';
@@ -37,7 +25,7 @@ import BigText from './components/BigText.vue';
 
 export default {
   name: 'App',
-  components: { MainHeader, DescriptionRow, AiRow, ServicesRow, BigText },
+  components: { MainHeader, DescriptionRow, AiRow, ServicesRow, BigText, AbsoluteQrCode },
   data() {
     return {
       headerData: {
@@ -56,6 +44,9 @@ export default {
             id: "services"
           }
         ]
+      },
+      qrCodeData: {
+        url : "/images/logos/qr_code.png"
       },
       title1Data: {
         id: "what",

@@ -245,3 +245,18 @@ body {
     justify-content: center !important;
     align-items: end !important;
 }
+
+.qr_code {
+    width: 200px !important; 
+    height: 200px !important;
+    position: fixed !important;
+    right: 0 !important;
+    top: 0 !important;
+    z-index: 100 !important;
+}
+
+@media (max-width: 500px) {
+    .qr_code {
+        display: none !important;
+    }
+}
