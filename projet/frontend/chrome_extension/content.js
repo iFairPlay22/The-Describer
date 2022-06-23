@@ -1,7 +1,9 @@
 var getAltBalise = async (image, userLocale) => {
   var myHeaders = new Headers();
+  myHeaders.append("Authorization", "Bearer mbzy52iNo9bo6sGYXL6WGacc9LQz1mvv");
   myHeaders.append("Content-Type", "application/json");
   let src = image.src;
+
   var raw = JSON.stringify({
     file: src,
   });
@@ -13,7 +15,7 @@ var getAltBalise = async (image, userLocale) => {
     redirect: "follow",
   };
 
-  await fetch(
+  fetch(
     "https://www.loicfournier.fr/iadecode/from_url/" + userLocale,
     requestOptions
   )
@@ -55,7 +57,8 @@ if (
         //if alt is null or empty
         if (images[i].alt == "" || images[i].alt == null) {
           console.log(i);
-          await getAltBalise(images[i], userLocale);
+          getAltBalise(images[i], userLocale);
+          console.log(images[i].alt);
         }
       }
     }

@@ -12,10 +12,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'AudioManager.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
 }
 
@@ -146,11 +146,15 @@ class _MyHomePageState extends State<MyHomePage> {
     }else{
       lastPath = _imageFile!.path;
     }
+    var headers = {
+      'Authorization': 'Bearer mbzy52iNo9bo6sGYXL6WGacc9LQz1mvv'
+    };
+
     var request = http.MultipartRequest(
         'POST', Uri.parse('https://www.loicfournier.fr/iadecode/from_file/${Platform.localeName}'));
     request.files
         .add(await http.MultipartFile.fromPath('file', _imageFile!.path));
-
+    request.headers.addAll(headers);
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
