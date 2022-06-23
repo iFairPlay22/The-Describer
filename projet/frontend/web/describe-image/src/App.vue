@@ -3,6 +3,20 @@
     <main-header :data="headerData" />
 
     <div id="body">
+      <el-image
+        style="
+          width: 200px; 
+          height: 200px;
+          position: fixed;
+          right: 0;
+          top: 0;
+          z-index: 100;
+        "
+        src="/images/logos/qr_code.png"
+        fit="cover"
+        class="small-image"
+      />
+
       <big-text :data="title1Data" />
       <description-row :data="descriptionData" />
       <big-text :data="title2Data" />
