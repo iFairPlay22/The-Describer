@@ -1,7 +1,7 @@
 version: "3"
 services:
   botdiscord:
-    image: bot_discord
+    image: hereal/the_describer:bot_discord
     depends_on:
       - serveurai
     ports:
@@ -9,7 +9,7 @@ services:
     networks:
       - networkName
   serveurai:
-    image: backend_ai
+    image: hereal/the_describer:backend_ai
     ports:
       - "5000:5000"
     networks:
