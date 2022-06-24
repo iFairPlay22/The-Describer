@@ -89,7 +89,7 @@ async def on_message(message):
 async def request_from_url(message, url):
     await message.channel.send('Processing ...')
     headers = {"Authorization": TOKEN_API}
-    res = requests.post('https://www.loicfournier.fr/iadecode/from_url/'+bot.language, headers=headers, json={'file': url})
+    res = requests.post('http://serveurai:5000/iadecode/from_url/'+bot.language, headers=headers, json={'file': url})
         
     if(res.status_code == 200):
         embedMsg = discord.Embed(title="", description=res.json()['message'].capitalize(), color=0xff0000)

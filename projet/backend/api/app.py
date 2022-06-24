@@ -83,4 +83,4 @@ def after_request_func(response):
 if __name__ == "__main__":
 
     DecoderManager = IADecodeManager(4)
-    app.run()
+    app.run(host="0.0.0.0")
