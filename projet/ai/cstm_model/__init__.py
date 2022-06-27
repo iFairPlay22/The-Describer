@@ -1,3 +1,4 @@
+import cstm_vars as v
 import os
 from datetime import datetime
 import torch
@@ -131,14 +132,14 @@ class LSTMModel(nn.Module):
 class FullModel(nn.Module):
     """ Full Model : CNN & LSTM """
 
-    def __init__(self, device, image_shape, vocabulary):
+    def __init__(self, vocabulary):
         """Combine the CNN and LSTM models."""
         
         super(FullModel, self).__init__()
 
         # Build the models
-        self.__encoder_model = CNNModel(image_shape[0]).to(device)
-        self.__decoder_model = LSTMModel(image_shape[0], image_shape[0] + image_shape[1], len(vocabulary), 1).to(device)        
+        self.__encoder_model = CNNModel(v.IMAGE_SHAPE[0]).to(v.DEVICE)
+        self.__decoder_model = LSTMModel(v.IMAGE_SHAPE[0], v.IMAGE_SHAPE[0] + v.IMAGE_SHAPE[1], len(vocabulary), 1).to(v.DEVICE)        
             
         # Loss and optimizer
         self.__loss_criterion = nn.CrossEntropyLoss()
@@ -174,8 +175,12 @@ class FullModel(nn.Module):
 
         return self.__decoder_model.getAllParameters() + self.__encoder_model.getAllParameters()
 
-    def save(self, output_models_path : str, epoch : int):
+    def save(self, epoch : int):
         """ Save the values of the model : encoder + decoder. """
+
+        # Create the model directory if not exists
+        if not os.path.exists(v.OUTPUT_MODELS_PATH):
+            os.makedirs(v.OUTPUT_MODELS_PATH)
 
         # Get the current time
         dateString = str(datetime.now())[0:19].replace("-", "_").replace(":", "_").replace(" ", "_") + "_"
@@ -183,24 +188,28 @@ class FullModel(nn.Module):
         # Save the encoder model
         torch.save(
             self.__decoder_model.state_dict(), 
-            os.path.join(output_models_path, 'decoder_{}_{}.ckpt'.format(dateString, epoch + 1))
+            os.path.join(v.OUTPUT_MODELS_PATH, 'decoder_{}_{}.ckpt'.format(dateString, epoch + 1))
         )
 
         # Save the decoder model
         torch.save(
             self.__encoder_model.state_dict(), 
-            os.path.join(output_models_path, 'encoder_{}_{}.ckpt'.format(dateString, epoch + 1))
+            os.path.join(v.OUTPUT_MODELS_PATH, 'encoder_{}_{}.ckpt'.format(dateString, epoch + 1))
         )
 
-    def load(self, input_models_path : str):
+    def load(self):
         """ Load the values of the model : encoder + decoder. """
 
+        # Create the model directory if not exists
+        if not os.path.exists(v.OUTPUT_MODELS_PATH):
+            os.makedirs(v.OUTPUT_MODELS_PATH)
+
         # Find the latest model
-        files = os.listdir(input_models_path)
+        files = os.listdir(v.OUTPUT_MODELS_PATH)
         decoderFile = None
         encoderFile = None
 
-        for filename in files:
+        for filename in sorted(files):
             if filename.endswith('.ckpt'):
                 if filename.startswith('decoder'):
                     decoderFile = filename
@@ -208,10 +217,9 @@ class FullModel(nn.Module):
                     encoderFile = filename
 
         if encoderFile and decoderFile:
-
             # Load the encoder model and the decoder model
-            self.__encoder_model.load_state_dict(torch.load(input_models_path + encoderFile))
-            self.__decoder_model.load_state_dict(torch.load(input_models_path + decoderFile))
+            self.__encoder_model.load_state_dict(torch.load(v.OUTPUT_MODELS_PATH + encoderFile))
+            self.__decoder_model.load_state_dict(torch.load(v.OUTPUT_MODELS_PATH + decoderFile))
             print("\n\n==> Loading models via FullModel.load()")
             print("Loaded models from {} and {}".format(encoderFile, decoderFile))
 

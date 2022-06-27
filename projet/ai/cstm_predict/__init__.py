@@ -4,8 +4,6 @@ import cstm_model as cstm_model
 
 def predict(img_tensor, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel):
     """ Predict the caption for an image """
-
-    print("\n\n ==> Make a prediction\n")
     
     # We don't train the models
     fullModel.evalMode()

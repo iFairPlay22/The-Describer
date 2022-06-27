@@ -1,5 +1,4 @@
 import time
-from nltk.corpus import wordnet
 
 class Timer(object):
     """ Allows to count the time elapsed since the timer was started """
@@ -32,19 +31,3 @@ class Timer(object):
 
         return print("\n\n==> Time elapsed: {}".format(self.__getElapsedTime()))
 
-def getSynonyms(word):
-    """ Returns the synonyms of a word """
-
-    if not word:
-        return []
-
-    all_synonyms_with_ = { lemm.name() for syn in wordnet.synsets(word) for lemm in syn.lemmas() }
-    all_synonyms_with_.add(word)
-    
-    if word[-1] != "s":
-        all_synonyms_with_.add(word + 's')
-        all_synonyms_with_.add(word + 'es')
-    else:
-        all_synonyms_with_.add(word[:-1])
-
-    return list(map(lambda word_with_: word_with_.split("_"), all_synonyms_with_))

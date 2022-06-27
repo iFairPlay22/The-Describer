@@ -1,3 +1,4 @@
+import cstm_vars as v
 import os
 from tqdm import tqdm
 import nltk
@@ -5,6 +6,7 @@ import pickle
 from PIL import Image
 from collections import Counter
 from pycocotools.coco import COCO
+import nltk
 
 class Vocab(object):
     """ Vocabulary wrapper """
@@ -59,26 +61,28 @@ class Vocab(object):
 
         return " ".join(words)
 
-    def save(self, output : str):
+    def save(self):
         """ Save the vocabulary wrapper """
         
-        print("\n\nSave the vocabulary wrapper to '{}'".format(output))
-        with open(output, 'wb') as f:
+        print("\n\nSave the vocabulary wrapper to '{}'".format(v.OUTPUT_VOCABULARY_PATH))
+        with open(v.OUTPUT_VOCABULARY_PATH, 'wb') as f:
             pickle.dump(self, f)
 
-    def load(output : str):
+    def load():
         """ Load the vocabulary wrapper """
     
-        print("\n\nLoad the vocabulary wrapper from '{}'".format(output))
-        with open(output, 'rb') as f:
+        print("\n\nLoad the vocabulary wrapper from '{}'".format(v.OUTPUT_VOCABULARY_PATH))
+        with open(v.OUTPUT_VOCABULARY_PATH, 'rb') as f:
             return pickle.load(f)
 
 # Step 1: Build the vocabulary wrapper and save it to disk.
-def build_vocabulary(json, threshold=4):
+def build_and_store_vocabulary(threshold=4):
     """ Construct the vocabulary wrapper and return it """
 
+    print("Load the data from '{}'".format(v.CAPTIONS_PATH[0]))
+
     # Load JSON
-    coco = COCO(json)
+    coco = COCO(v.CAPTIONS_PATH[0])
 
     # Loading captions
     ids = coco.anns.keys()
@@ -107,47 +111,39 @@ def build_vocabulary(json, threshold=4):
     for token, cnt in counter.items():
         if threshold <= cnt:
             vocab.add_token(token)
+
+            
+    print("Total vocabulary size: {}".format(len(vocab)))
+    vocab.save()
         
     return vocab
 
-
-def build_and_store_vocabulary(input : str, output : str):
-    """ Build the vocabulary wrapper and save it to disk """
-
-    print("\n\n==> build_and_store_vocabulary()")
-
-    print("Load the data from '{}'".format(input))
-    vocab = build_vocabulary(input)
-    print("Total vocabulary size: {}".format(len(vocab)))
-
-    vocab.save(output)
-
 # Step 2: Resize the images
 
-def load_image(input_image_file_path : str, device, transform=None):
+def load_image(transform=None):
     """ Load and transform an image """
 
-    img = Image.open(input_image_file_path)
+    img = Image.open(v.INPUT_IMAGE_TO_TEST_PATH)
     img = img.resize([224, 224], Image.LANCZOS).convert('RGB')
     
     if transform is not None:
         img = transform(img).unsqueeze(0)
     
-    return img.to(device)
+    return img.to(v.DEVICE)
 
-def reshape_image(image, shape):
+def reshape_image(image):
     """ Reshape an image """
     
     # Resize an image to the given shape
-    return image.resize(shape, Image.ANTIALIAS)
+    return image.resize(v.IMAGE_SHAPE, Image.ANTIALIAS)
  
-def reshape_images(io, shape):
+def reshape_images():
     """ Reshape all images in a dataset """
 
     print("\n\n==> reshape_images()")
     
     # Load the images
-    for obj in io:
+    for obj in v.IMAGES_PATH:
 
         input = obj["input"]
         output = obj["output"]
@@ -166,7 +162,7 @@ def reshape_images(io, shape):
                 with Image.open(f) as image:
 
                     # Reshape them
-                    image = reshape_image(image, shape)
+                    image = reshape_image(image)
 
                     # Save them to the output directory
                     image.save(os.path.join(output, im), image.format)

@@ -25,6 +25,9 @@ class SmartPlot:
     def build(self):
         """ Add the title, legend, labels and store the plot in a file """
 
+        if not os.path.exists(self.__output_path):
+            os.makedirs(self.__output_path)
+
         self.__fig, self.__ax = plt.subplots()
 
         for label, k in self.__data.items():
@@ -33,6 +36,7 @@ class SmartPlot:
         self.__ax.set_xlabel(self.__x_label)
         self.__ax.set_ylabel(self.__y_label)
         self.__ax.set_title(self.__title)
+        self.__ax.legend()
 
         if not os.path.exists(self.__output_path):
             os.makedirs(self.__output_path)

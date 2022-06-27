@@ -1,5 +1,4 @@
-import difflib
-import re
+import cstm_vars as v
 import os
 from tqdm import tqdm
 import nltk
@@ -13,7 +12,7 @@ import cstm_load as cstm_load
 import cstm_model as cstm_model
 import cstm_predict as cstm_predict
 import cstm_plot as cstm_plot
-import cstm_util
+import cstm_accuracy as cstm_accuracy
 
 class CustomCocoDataset(data.Dataset):
     """ Custom Coco dataset that can represent a subset of the original dataset for training, test or evaluation. """
@@ -21,7 +20,7 @@ class CustomCocoDataset(data.Dataset):
     def __init__(self, output_rezized_image_folder_path : str, input_annotations_captions_train_path : str, vocabulary : cstm_load.Vocab, transform = None):
         """ Initialize the dataset. """
 
-        print("\n\n==> InItializating CustomCocoDataset()")
+        print("\n\n==> Itializating CustomCocoDataset()")
 
         self.__output_rezized_image_folder_path = output_rezized_image_folder_path
         self.__data = COCO(input_annotations_captions_train_path)
@@ -70,6 +69,7 @@ class CustomCocoDataset(data.Dataset):
     def __len__(self):
         """ Return the size of the dataset """
         return len(self.__indices)
+        # return 100 # to set a max quantity of images to load (util for testing)
  
 def collate_function(data_batch : int):
     """ Creates mini-batch tensors from the list of tuples (image, caption) """
@@ -123,20 +123,20 @@ def get_loader(data_path : str, input_annotations_captions_train_path : str, voc
     
     return custom_training_data_loader
 
-def learn(custom_training_data_loader : CustomCocoDataset, device, optimizer, fullModel : cstm_model.FullModel, epoch : int, output_models_path : str, learnPlot : cstm_plot.SmartPlot = None , learnPlot2 : cstm_plot.SmartPlot = None):
+def learn(custom_training_data_loader : CustomCocoDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, optimizer : torch.optim.Adam, epoch : int, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
     """ Learn 1 epoch of the model and save the loss in the plots. """
 
     print("\n\n==> learn()")
-
-    # Learn
-    batchNb = 0
+    accurracyTool = cstm_accuracy.AccuracyBasedOnSynonyms()
+    imageNb = 0
     allLoss = []
 
+    # Foreach batch
     for images, captions, lens in tqdm(custom_training_data_loader):
 
-        # Get the bach data
-        images = images.to(device)
-        captions = captions.to(device)
+        # Get the batch data
+        images = images.to(v.DEVICE)
+        captions = captions.to(v.DEVICE)
         tgts = pack_padded_sequence(captions, lens, batch_first=True)[0]
 
         # Reset the gradient
@@ -153,149 +153,157 @@ def learn(custom_training_data_loader : CustomCocoDataset, device, optimizer, fu
         loss.backward()
         optimizer.step()
 
-        batchNb += 1
+        with torch.no_grad():
+            # Make predictions
+            predictions = cstm_predict.predict(images, vocabulary, fullModel)
 
-    # We save the data loss for each epoch
+            # Foreach image
+            for j in range(len(images)):
+
+                predictionSentance = vocabulary.translate(predictions["indices"][j].cpu().numpy()).split()[1:-1]
+                targetSentance     = vocabulary.translate(captions[j].cpu().numpy()).split()[1:-1]
+                accurracyTool.calculateAccuracy(predictionSentance, targetSentance)
+                imageNb += 1
+
+    # Data loss
     print()
-    print(' [LEARNING] : Epoch [{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch+1, sum(allLoss), sum(allLoss) / len(allLoss))) 
+    print(' [LEARNING] : Epoch [{}], Cost : {:.4f}, Loss: {:.4f}'.format(epoch+1, sum(allLoss), sum(allLoss) / len(allLoss))) 
+    if costPlot:
+        costPlot.addPoint("Learning cost", "red", sum(allLoss))
+    if lossPlot:
+        lossPlot.addPoint("Learning loss", "red", sum(allLoss) / len(allLoss))
 
-    if learnPlot:
-        learnPlot.addPoint("Total loss", "red", sum(allLoss))
+    # Ratio average
+    print()
+    print('>> Ratio average')
+    accuracyAverage = accurracyTool.getRatioAverage()
+    print("Learning accuracy : {:.4f}% (good key words used)".format(accuracyAverage))
+    if accuracyAveragePlot:
+        accuracyAveragePlot.addPoint("Learning accuracy", "red", accuracyAverage)
 
-    if learnPlot2:
-        learnPlot2.addPoint("Average loss", "red", sum(allLoss) / len(allLoss))
+    # Ratio detail
+    print()
+    print('>> Ratio details')
+    detailedRatios, cummulatedDetailedRatios = accurracyTool.getDetailedRatios()
+    for i in range(len(detailedRatios)):
+        detailedRatio = detailedRatios[i]
+        cummulatedDetailedRatio = cummulatedDetailedRatios[i]
+        print(' Learning good predictions for ratio {:.2f} : {}% ({}/{})'.format(detailedRatio["min"], detailedRatio["sum"] * 100 / imageNb, detailedRatio["sum"], imageNb))
+        if detailedAccuracyPlots:
+            detailedAccuracyPlots[cummulatedDetailedRatio["min"]].addPoint("Learning accuracy", "red", cummulatedDetailedRatio["sum"] * 100 / imageNb)
+    print()
 
     # We save the model
-    fullModel.save(output_models_path, epoch)
+    fullModel.save(epoch)
 
-def eval(custom_testing_data_loader : CustomCocoDataset, device, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, epoch, spacyEn, testPlot):
+def eval(custom_testing_data_loader : CustomCocoDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, epoch, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
     """ Test 1 epoch of the model and save the accuracy in the plots. """
 
-    print("\n\n==> eval()")
-    
-    batchNb = 0
-    imageNb = 0
+    with torch.no_grad():
 
-    ratios = [
-        { "min": 0.1, "color": "orange", "sum": 0 },
-        { "min": 0.2, "color": "blue",   "sum": 0 },
-        { "min": 0.3, "color": 'green',  "sum": 0 },
-        { "min": 0.4, "color": 'brown',  "sum": 0 },
-        { "min": 0.5, "color": 'grey',   "sum": 0 },
-        { "min": 0.6, "color": 'red',    "sum": 0 },
-        { "min": 0.7, "color": 'pink',   "sum": 0 },
-        { "min": 0.8, "color": 'yellow', "sum": 0 },
-        { "min": 0.9, "color": 'aqua',   "sum": 0 }
-    ]
-    detailRatios = {}
-    sw = spacyEn.Defaults.stop_words
+        print("\n\n==> eval()")
+        accurracyTool = cstm_accuracy.AccuracyBasedOnSynonyms()
+        imageNb = 0
+        allLoss = []
 
-    # Test
-    for images, captions, lens in tqdm(custom_testing_data_loader):
-        
-        images = images.to(device)
-        captions = captions.to(device)
-        predictions = cstm_predict.predict(images, vocabulary, fullModel)
-
-        for j in range(len(images)):
-
-            # Get the caption / prediction
-            prediction = vocabulary.translate(predictions["indices"][j].cpu().numpy()).split()[1:-1]
-            caption = vocabulary.translate(captions[j].cpu().numpy()).split()[1:-1]
-
-            # Remove punctuation
-            prediction = re.sub(r'[^\w\s]', '', " ".join(prediction)).split(" ")
-            caption = re.sub(r'[^\w\s]', '', " ".join(caption)).split(" ")
-
-            # Remove stop words 
-            predictionWithoutSw = set( w for w in prediction  if not w in sw )
-
-            # Check if we can find sense similarities
-            commonWordsWithSynonyms = [
-                syn
-                for predictionWordWithoutSw in predictionWithoutSw 
-                for syn in cstm_util.getSynonyms(predictionWordWithoutSw)
-                if any(caption[idx : idx + len(syn)] == syn for idx in range(len(caption) - len(syn) + 1))
-            ]
-
-            # Update ratios
-            totalCommonWords = len(commonWordsWithSynonyms)
-            if totalCommonWords in detailRatios:
-                detailRatios[totalCommonWords] += 1
-            else:
-                detailRatios[totalCommonWords] = 1
-
-            currentRatio = totalCommonWords / len(predictionWithoutSw)
-            for ratio in ratios:
-                if ratio["min"] <= currentRatio:
-                    ratio["sum"] += 1
+        # Foreach batch
+        for images, captions, lens in tqdm(custom_testing_data_loader):
             
-            imageNb += 1
+            # Get the batch data
+            images = images.to(v.DEVICE)
+            captions = captions.to(v.DEVICE)
+            tgts = pack_padded_sequence(captions, lens, batch_first=True)[0]
 
-        batchNb += 1
+            # Make predictions
+            outputs = fullModel.forward(images, captions, lens)
 
-    print()
-    print(' [TESTING] : Epoch [{}]'.format(epoch+1)) 
+            # Compute the total error
+            loss    = fullModel.loss(outputs, tgts)
+            allLoss.append(loss.item())
 
-    print('>> Ratios')
-    for ratio in ratios:
-        ratio["avg"] = ratio["sum"] * 100 / imageNb
-        print(' Good predictions for ratio {} : {}% ({}/{})'.format(ratio["min"], ratio["avg"], ratio["sum"], imageNb))
+            # Make predictions
+            predictions = cstm_predict.predict(images, vocabulary, fullModel)
 
-        if testPlot:
-            testPlot.addPoint(ratio["min"], ratio["color"], ratio["avg"])
-    
-    print('>> Detail')
-    for commonWords, number in sorted(detailRatios.items(), key=lambda item: item[0]):
-        ratio = number * 100 / imageNb
-        print("Common words {} : {}% ({}/{})".format(commonWords, ratio, number, imageNb))
+            # Foreach image
+            for j in range(len(images)):
 
-def train(totalEpochs : int, batch_size : int, step : float, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, images_path : str, captions_path : str, output_models_path : str, output_plot_path : str, device, transform, spacyEn, withTestDataset=False):
+                predictionSentance = vocabulary.translate(predictions["indices"][j].cpu().numpy()).split()[1:-1]
+                targetSentance     = vocabulary.translate(captions[j].cpu().numpy()).split()[1:-1]
+                accurracyTool.calculateAccuracy(predictionSentance, targetSentance)
+                imageNb += 1
+
+
+        # Data loss
+        print()
+        print(' [TESTING] : Epoch [{}], Cost : {:.4f}, Loss: {:.4f}'.format(epoch+1, sum(allLoss), sum(allLoss) / len(allLoss))) 
+        if costPlot:
+            costPlot.addPoint("Validation cost", "green", sum(allLoss))
+        if lossPlot:
+            lossPlot.addPoint("Validation loss", "green", sum(allLoss) / len(allLoss))
+
+        # Ratio average
+        print()
+        print('>> Ratio average')
+        accuracyAverage = accurracyTool.getRatioAverage()
+        print("Validation accuracy : {:.4f}% (good key words used)".format(accuracyAverage))
+        if accuracyAveragePlot:
+            accuracyAveragePlot.addPoint("Validation accuracy", "green", accuracyAverage)
+
+        # Ratio detail
+        print()
+        print('>> Ratio details')
+        detailedRatios, cummulatedDetailedRatios = accurracyTool.getDetailedRatios()
+        for i in range(len(detailedRatios)):
+            detailedRatio = detailedRatios[i]
+            cummulatedDetailedRatio = cummulatedDetailedRatios[i]
+            print(' Validation good predictions for ratio {:.2f} : {}% ({}/{})'.format(detailedRatio["min"], detailedRatio["sum"] * 100 / imageNb, detailedRatio["sum"], imageNb))
+            if detailedAccuracyPlots:
+                detailedAccuracyPlots[cummulatedDetailedRatio["min"]].addPoint("Learning accuracy", "red", cummulatedDetailedRatio["sum"] * 100 / imageNb)
+        print()
+
+def train(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTestDataset=False):
     """ Train and test the model with many epochs """
 
-    # Create the model directory if not exists
-    if not os.path.exists(output_models_path):
-        os.makedirs(output_models_path)
-
     # Build the data loader for the training set
-    custom_training_data_loader = get_loader(images_path[0]["output"], captions_path[0], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+    custom_training_data_loader = get_loader(v.IMAGES_PATH[0]["output"], v.CAPTIONS_PATH[0], vocabulary, v.TRANSFORM, v.BATCH_SIZE, shuffle=True, num_workers=2) 
 
     if withTestDataset:    
         # Build the data loader for the testing set
-        custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
+        custom_testing_data_loader = get_loader(v.IMAGES_PATH[1]["output"], v.CAPTIONS_PATH[1], vocabulary, v.TRANSFORM, v.BATCH_SIZE, shuffle=True, num_workers=2) 
 
     # Train the models
     print("\n\n==> Train the models...")
     fullModel.trainMode()
 
     # Use Adam optimizer
-    optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=step)
+    optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=v.STEP)
 
     # Display the plot
-    learnPlot = cstm_plot.SmartPlot("Training", "Epochs", "Loss", output_plot_path)
-    learnPlot2 = cstm_plot.SmartPlot("Training", "Epochs", "Loss", output_plot_path)
-    testPlot = cstm_plot.SmartPlot("Test", "Epochs", "Ratios", output_plot_path)
+    costPlot = cstm_plot.SmartPlot("Cost", "Epochs", "Cost (total loss)", v.OUTPUT_PLOTS_PATH)
+    lossPlot = cstm_plot.SmartPlot("Loss", "Epochs", "Loss", v.OUTPUT_PLOTS_PATH)
+    accuracyPlot = cstm_plot.SmartPlot("Accuracy", "Epochs", "Accuracy", v.OUTPUT_PLOTS_PATH)
+    detailedAccuracyPlots = {
+        ratio["min"] : cstm_plot.SmartPlot("Accuracy plot for ratio {}".format(ratio["min"]), "Epoch", "Common key words ratio", v.OUTPUT_PLOTS_PATH)
+        for ratio in cstm_accuracy.AccuracyBasedOnSynonyms.getRatios()
+    }
 
     # For each epoch
-    for epoch in tqdm(range(totalEpochs)):
+    for epoch in tqdm(range(v.TOTAL_EPOCHS)):
 
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
         # Learn
-        learn(custom_training_data_loader, device, optimizer, fullModel, epoch, output_models_path, learnPlot, learnPlot2)
+        learn(custom_training_data_loader, vocabulary, fullModel, optimizer, epoch, costPlot, lossPlot, accuracyPlot, detailedAccuracyPlots)
 
         if withTestDataset:
             # test
-            eval(custom_testing_data_loader, device, vocabulary, fullModel, epoch, spacyEn, testPlot)
+            eval(custom_testing_data_loader, vocabulary, fullModel, epoch, costPlot, lossPlot, accuracyPlot, detailedAccuracyPlots)
 
     # Save the plots
-    learnPlot.build()
-    learnPlot2.build()
+    for plot in list(detailedAccuracyPlots.values()) + [ costPlot, lossPlot, accuracyPlot]:
+        plot.build()
 
-    if withTestDataset:
-        testPlot.build()
-
-def testAll(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, batch_size, images_path, captions_path : str , device, transform, spacyEn, withTestDataset=True, withTrainDataset=True):
+def test(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTestDataset=True, withTrainDataset=True):
     """ Test the test dataset or the training dataset with the model """
 
     # Train the models
@@ -305,14 +313,14 @@ def testAll(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, batc
         # Build the data loader for the training set
 
         print("\n\n==> Evaluating the train model...")
-        custom_training_data_loader = get_loader(images_path[0]["output"], captions_path[0], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
-        eval(custom_training_data_loader, device, vocabulary, fullModel, 0, spacyEn, None)
+        custom_training_data_loader = get_loader(v.IMAGES_PATH[0]["output"], v.CAPTIONS_PATH[0], vocabulary, v.TRANSFORM, v.BATCH_SIZE, shuffle=True, num_workers=2) 
+        eval(custom_training_data_loader, vocabulary, fullModel, 0)
         print()
 
     if withTestDataset:    
         # Build the data loader for the testing set
 
         print("\n\n==> Evaluating the test model...")
-        custom_testing_data_loader = get_loader(images_path[1]["output"], captions_path[1], vocabulary, transform, batch_size, shuffle=True, num_workers=2) 
-        eval(custom_testing_data_loader, device, vocabulary, fullModel, 0, spacyEn, None)
+        custom_testing_data_loader = get_loader(v.IMAGES_PATH[1]["output"], v.CAPTIONS_PATH[1], vocabulary, v.TRANSFORM, v.BATCH_SIZE, shuffle=True, num_workers=2) 
+        eval(custom_testing_data_loader, vocabulary, fullModel, 0)
         print()
