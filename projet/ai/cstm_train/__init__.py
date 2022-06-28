@@ -258,7 +258,7 @@ def eval(custom_testing_data_loader : CustomCocoDataset, vocabulary : cstm_load.
             cummulatedDetailedRatio = cummulatedDetailedRatios[i]
             print(' Validation good predictions for ratio {:.2f} : {}% ({}/{})'.format(detailedRatio["min"], detailedRatio["sum"] * 100 / imageNb, detailedRatio["sum"], imageNb))
             if detailedAccuracyPlots:
-                detailedAccuracyPlots[cummulatedDetailedRatio["min"]].addPoint("Learning accuracy", "red", cummulatedDetailedRatio["sum"] * 100 / imageNb)
+                detailedAccuracyPlots[cummulatedDetailedRatio["min"]].addPoint("Validation accuracy", "green", cummulatedDetailedRatio["sum"] * 100 / imageNb)
         print()
 
 def train(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTestDataset=False):
@@ -283,7 +283,7 @@ def train(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTe
     lossPlot = cstm_plot.SmartPlot("Loss", "Epochs", "Loss", v.OUTPUT_PLOTS_PATH)
     accuracyPlot = cstm_plot.SmartPlot("Accuracy", "Epochs", "Accuracy", v.OUTPUT_PLOTS_PATH)
     detailedAccuracyPlots = {
-        ratio["min"] : cstm_plot.SmartPlot("Accuracy plot for ratio {}".format(ratio["min"]), "Epoch", "Common key words ratio", v.OUTPUT_PLOTS_PATH)
+        ratio["min"] : cstm_plot.SmartPlot("Accuracy plot for ratio {:.2f}".format(ratio["min"]), "Epoch", "Common key words ratio", v.OUTPUT_PLOTS_PATH)
         for ratio in cstm_accuracy.AccuracyBasedOnSynonyms.getRatios()
     }
 
