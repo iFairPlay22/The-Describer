@@ -123,7 +123,7 @@ def get_loader(data_path : str, input_annotations_captions_train_path : str, voc
     
     return custom_training_data_loader
 
-def learn(custom_training_data_loader : CustomCocoDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, optimizer : torch.optim.Adam, epoch : int, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
+def learn(scaler, custom_training_data_loader : CustomCocoDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, optimizer : torch.optim.Adam, epoch : int, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
     """ Learn 1 epoch of the model and save the loss in the plots. """
 
     print("\n\n==> learn()")
@@ -142,16 +142,25 @@ def learn(custom_training_data_loader : CustomCocoDataset, vocabulary : cstm_loa
         # Reset the gradient
         optimizer.zero_grad()
 
-        # Make predictions
-        outputs = fullModel.forward(images, captions, lens)
+        with torch.cuda.amp.autocast():
+            # Make predictions
+            outputs = fullModel.forward(images, captions, lens)
 
-        # Compute the total error
-        loss    = fullModel.loss(outputs, tgts)
-        allLoss.append(loss.item())
+            # Compute the total error
+            loss    = fullModel.loss(outputs, tgts)
+            allLoss.append(loss.item())
+            
+
+        
+
+        
+        
+        
         
         # Backward and step
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
         with torch.no_grad():
             # Make predictions
@@ -286,14 +295,14 @@ def train(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTe
         ratio["min"] : cstm_plot.SmartPlot("Accuracy plot for ratio {:.2f}".format(ratio["min"]), "Epoch", "Common key words ratio", v.OUTPUT_PLOTS_PATH)
         for ratio in cstm_accuracy.AccuracyBasedOnSynonyms.getRatios()
     }
-
+    scaler = torch.cuda.amp.GradScaler()
     # For each epoch
     for epoch in tqdm(range(v.TOTAL_EPOCHS)):
 
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
         # Learn
-        learn(custom_training_data_loader, vocabulary, fullModel, optimizer, epoch, costPlot, lossPlot, accuracyPlot, detailedAccuracyPlots)
+        learn(scaler, custom_training_data_loader, vocabulary, fullModel, optimizer, epoch, costPlot, lossPlot, accuracyPlot, detailedAccuracyPlots)
 
         if withTestDataset:
             # test
