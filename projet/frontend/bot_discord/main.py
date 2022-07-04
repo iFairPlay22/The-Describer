@@ -55,7 +55,7 @@ async def on_message(message):
     # !about : Everything you have to know about me
     elif message.content.startswith('!about'):
         embedMsg = discord.Embed(title="About me :", description="", color=0xff0000)
-        embedMsg.add_field(name="Website", value="https://the-describers.netlify.app/", inline=False)
+        embedMsg.add_field(name="Website", value="https://the-describer.netlify.app/", inline=False)
         embedMsg.add_field(name="Github", value="https://github.com/iFairPlay22/DescribeImage", inline=False)
         embedMsg.add_field(name="Supported languages", value="BG, CS, DA, DE, EL, EN, ES, FI, FR, HU, ID, IT, JA, LT, LV, \nNL, PL, PT-PT, PT-BR, RO, RU, SK, SL, SV, TR, ZH", inline=False)
         embedMsg.add_field(name="Authors", value="• Fabien Courtois\n• Loïc Fournier\n• Lucas Billard\n• Ewen Bouquet", inline=False)
@@ -71,6 +71,7 @@ async def on_message(message):
         embedMsg.add_field(name="language", value="Switch to specified language", inline=False)
         embedMsg.add_field(name="commands", value="List every commands available", inline=False)
         await message.reply(embed = embedMsg)
+    
     # !language : Switch to specified language 
     elif message.content.startswith('!language'):
         tab = message.content.split(" ")
