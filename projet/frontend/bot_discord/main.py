@@ -1,6 +1,7 @@
 import os
 import requests
 import discord
+import database
 
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -75,9 +76,16 @@ async def on_message(message):
     # !language : Switch to specified language 
     elif message.content.startswith('!language'):
         tab = message.content.split(" ")
-        if(len(tab) == 2 and tab[1] in bot.supported_languages):
-            bot.language = tab[1]
-            embedMsg = discord.Embed(title="", description="Language changed to " + bot.language, color=0xff0000)
+        if(len(tab) == 2 and tab[1].upper() in bot.supported_languages):
+            language = tab[1].upper()
+            # Register in database
+            if(database.userExists(message.author)):
+                database.updateUserLanguage(message.author, language)
+            else:
+                database.setUserLanguage(message.author, language)
+
+            # Send message in channel
+            embedMsg = discord.Embed(title="", description="Language changed to " + language, color=0xff0000)
             await message.reply(embed = embedMsg)
         else:
             embedMsg = discord.Embed(title="", description="", color=0xff0000)
@@ -88,10 +96,18 @@ async def on_message(message):
 
 # Call backend API to get image description from file url
 async def request_from_url(message, url):
+    # Loading message
     await message.channel.send('Processing ...')
+
+    # Get user language
+    language = database.getUserLanguage(message.author)
+    print(language)
+
+    # Send backend API request
     headers = {"Authorization": TOKEN_API}
-    res = requests.post('http://serveurai:5000/iadecode/from_url/'+bot.language, headers=headers, json={'file': url})
-        
+    res = requests.post('http://www.loicfournier.fr/iadecode/from_url/'+language, headers=headers, json={'file': url})
+    
+    # Print results
     if(res.status_code == 200):
         embedMsg = discord.Embed(title="", description=res.json()['message'].capitalize(), color=0xff0000)
         await message.reply(embed = embedMsg)
