@@ -13,7 +13,6 @@ TOKEN_API = os.getenv('TOKEN')
 
 # Init Bot
 bot = commands.Bot(command_prefix='!')
-bot.enable_automatic_description = True
 bot.language = "EN"
 bot.supported_languages = ["BG", "CS", "DA", "DE", "EL", "EN", "ES", "FI", "FR", "HU",
                                "ID", "IT", "JA", "LT", "LV", "NL", "PL", "PT-PT", "PT-BR", "RO", "RU", "SK", "SL", "SV", "TR", "ZH"]
@@ -31,26 +30,39 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     # Describe automatically images
-    if bot.enable_automatic_description and len(message.attachments) == 1 and message.attachments[0].content_type.startswith('image/'):
-        await request_from_url(message, message.attachments[0].url)
+    
+    # Check if automatic description is enabled
+    if database.getGuildBotEnable(message.guild) and database.getChannelBotEnable(message.channel):
+        # Check if message is an image
+        if len(message.attachments) == 1 and message.attachments[0].content_type.startswith('image/'):
+            await request_from_url(message, message.attachments[0].url)
 
-    ### COMMANDS ###
+    ####################
+    ##### COMMANDS #####
+    ####################
+
     # !describeUrl : Describe an image from an url
     elif message.content.startswith('!describeUrl'):
         await request_from_url(message, message.content.split(" ")[1])
 
     # !disable : Disable automatic image description
     elif message.content.startswith('!disable'):
-        bot.enable_automatic_description = False
+        if(database.channelExists(message.channel)):
+            database.updateChannelBotEnable(message.channel, "0")
+        else:
+            database.setChannelBotEnable(message.channel, "0")
         
-        embedMsg = discord.Embed(title="", description="Automatic description disabled", color=0xff0000)
+        embedMsg = discord.Embed(title="", description="Automatic description disabled for channel ***" + message.channel.name + "***", color=0xff0000)
         await message.reply(embed = embedMsg)
 
     # !enable : Enable automatic image description
     elif message.content.startswith('!enable'):
-        bot.enable_automatic_description = True
+        if(database.channelExists(message.channel)):
+            database.updateChannelBotEnable(message.channel, "1")
+        else:
+            database.setChannelBotEnable(message.channel, "1")
 
-        embedMsg = discord.Embed(title="", description="Automatic description enabled", color=0xff0000)
+        embedMsg = discord.Embed(title="", description="Automatic description enabled for channel ***" + message.channel.name + "***", color=0xff0000)
         await message.reply(embed = embedMsg)
 
     # !about : Everything you have to know about me
@@ -94,6 +106,10 @@ async def on_message(message):
     else:
         return
 
+######################
+##### FUNCTIONS ######
+######################
+
 # Call backend API to get image description from file url
 async def request_from_url(message, url):
     # Loading message
@@ -101,7 +117,6 @@ async def request_from_url(message, url):
 
     # Get user language
     language = database.getUserLanguage(message.author)
-    print(language)
 
     # Send backend API request
     headers = {"Authorization": TOKEN_API}
