@@ -20,7 +20,7 @@ if __name__ == "__main__":
         vocabulary = cstm_load.build_and_store_vocabulary()
 
         # Load the images from "images_path['input']", resize them to "image_shape" dimentions and save them in "images_path['output']"
-        cstm_load.reshape_images()
+        # cstm_load.reshape_images()
 
         # Load the captions and the image paths and save them in a json file
         cstm_load.create_and_store_json_datasets(vocabulary)

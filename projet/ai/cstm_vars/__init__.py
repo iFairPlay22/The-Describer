@@ -16,9 +16,9 @@ def init():
 # Actions to do
 TODO = [ 
     # "install" 
-    # "train"
+    "train"
     # "test"
-    "predict"
+    # "predict"
 ]
 
 # Network constants

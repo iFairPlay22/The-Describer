@@ -48,7 +48,7 @@ class CustomDataset(data.Dataset):
  
     def __len__(self):
         """ Return the size of the dataset """
-        return 2 # len(self.__data)
+        return len(self.__data)
  
 def collate_function(data_batch : int):
     """ Creates mini-batch tensors from the list of tuples (image, caption) """
