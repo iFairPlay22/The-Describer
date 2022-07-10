@@ -5,6 +5,6 @@ exos/Poly3/images/*
 # Projet
 projet/ai/data_dir/*
 projet/ai/models_dir/*
-projet/ai/output/*
+projet/ai/output_dir/*
 *.ckpt
 projet/frontend/bot_discord/.env

@@ -3,6 +3,7 @@ import os
 from tqdm import tqdm
 import nltk
 import pickle
+import json
 from PIL import Image
 from collections import Counter
 from pycocotools.coco import COCO
@@ -61,10 +62,28 @@ class Vocab(object):
 
         return " ".join(words)
 
+    def translate_back(self, sentence : str):
+
+        # Convert caption (string) to word ids.
+        words = nltk.tokenize.word_tokenize(str(sentence).lower())
+
+        caption_ids = []
+        caption_ids.append(self('<start>'))
+        caption_ids.extend([self(token) for token in words])
+        caption_ids.append(self('<end>'))
+
+        return caption_ids
+
     def save(self):
         """ Save the vocabulary wrapper """
         
         print("\n\nSave the vocabulary wrapper to '{}'".format(v.OUTPUT_VOCABULARY_PATH))
+
+        # Create the vocabulary directory if not exists
+        if not os.path.exists(v.OUTPUT_VOCABULARY_PATH):
+            os.makedirs(v.OUTPUT_VOCABULARY_PATH)
+
+        # Save the vocabulary wrapper
         with open(v.OUTPUT_VOCABULARY_PATH, 'wb') as f:
             pickle.dump(self, f)
 
@@ -72,6 +91,8 @@ class Vocab(object):
         """ Load the vocabulary wrapper """
     
         print("\n\nLoad the vocabulary wrapper from '{}'".format(v.OUTPUT_VOCABULARY_PATH))
+
+        # Load the vocabulary wrapper
         with open(v.OUTPUT_VOCABULARY_PATH, 'rb') as f:
             return pickle.load(f)
 
@@ -119,15 +140,14 @@ def build_and_store_vocabulary(threshold=4):
     return vocab
 
 # Step 2: Resize the images
-
-def load_image(transform=None):
+def load_image():
     """ Load and transform an image """
 
     img = Image.open(v.INPUT_IMAGE_TO_TEST_PATH)
     img = img.resize([224, 224], Image.LANCZOS).convert('RGB')
     
-    if transform is not None:
-        img = transform(img).unsqueeze(0)
+    if v.TRANSFORM is not None:
+        img = v.TRANSFORM(img).unsqueeze(0)
     
     return img.to(v.DEVICE)
 
@@ -166,3 +186,69 @@ def reshape_images():
 
                     # Save them to the output directory
                     image.save(os.path.join(output, im), image.format)
+
+# Step 3: Create the datasets JSONs
+class JsonDatasets():
+
+    @staticmethod
+    def save(trainData, evalData):
+        """ Save the vocabulary wrapper """
+        
+        print("\n\nSave the json datasets to '{}'".format(v.JSON_PATH + v.JSON_FILE_NAME))
+
+        # Create the json directory if not exists
+        if not os.path.exists(v.JSON_PATH):
+            os.makedirs(v.JSON_PATH)
+
+        # Save the json datasets
+        with open(v.JSON_PATH + v.JSON_FILE_NAME, 'w') as f:
+            json.dump({ "train": trainData, "eval": evalData }, f, indent=2)
+
+    @staticmethod
+    def load():
+        """ Load the vocabulary wrapper """
+    
+        print("\n\nLoad the vocabulary wrapper from '{}'".format(v.JSON_PATH))
+
+        with open(v.JSON_PATH + v.JSON_FILE_NAME, 'r') as f:
+            jsonData = json.load(f)
+            return jsonData['train'], jsonData['eval']
+
+def create_json_dataset(captionPath: str, resizedImagePath: str, vocab: Vocab):
+    """ Create the JSON dataset """
+
+    # Store the result
+    data = []
+        
+    # Load the coco data
+    cocoData = COCO(captionPath)
+
+    # For every image, caption in the input directory
+    for cocoDict in tqdm(cocoData.anns.values()):
+
+        # Get the image path
+        imagePath = os.path.join(resizedImagePath, cocoData.loadImgs(cocoDict["image_id"])[0]["file_name"])
+
+        # Get the caption
+        caption = cocoDict["caption"]
+
+        data.append({
+            "image_path": imagePath,
+            "caption": caption,
+            "tokenized_caption": vocab.translate_back(caption)
+        })
+        
+    return data
+
+def create_and_store_json_datasets(vocab: Vocab):
+    """ Build and store the JSONs datasets """
+
+    print("\n\n==> create_datasets_jsons()")
+
+    print("\nCreate the train JSON dataset")
+    trainData = create_json_dataset(v.CAPTIONS_PATH[0], v.IMAGES_PATH[0]["output"], vocab)
+
+    
+    print("\nCreate the train evaluation dataset")
+    evalData  = create_json_dataset(v.CAPTIONS_PATH[1], v.IMAGES_PATH[1]["output"], vocab)
+    JsonDatasets.save(trainData, evalData)

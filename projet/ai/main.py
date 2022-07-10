@@ -17,11 +17,13 @@ if __name__ == "__main__":
     if "install" in v.TODO:
 
         # Load the captions from "input_train_annotations_captions_train_path", generate the vocabulary and save it to "output_vocabulary_path"
-        cstm_load.build_and_store_vocabulary()
+        vocabulary = cstm_load.build_and_store_vocabulary()
 
         # Load the images from "images_path['input']", resize them to "image_shape" dimentions and save them in "images_path['output']"
         cstm_load.reshape_images()
 
+        # Load the captions and the image paths and save them in a json file
+        cstm_load.create_and_store_json_datasets(vocabulary)
 
     if "train" in v.TODO or "test" in v.TODO or "predict" in v.TODO:
 

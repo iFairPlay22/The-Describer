@@ -3,7 +3,6 @@ import os
 from tqdm import tqdm
 import nltk
 from PIL import Image
-from pycocotools.coco import COCO
 import torch
 import torch.utils.data as data
 from torch.nn.utils.rnn import pack_padded_sequence
@@ -14,62 +13,42 @@ import cstm_predict as cstm_predict
 import cstm_plot as cstm_plot
 import cstm_accuracy as cstm_accuracy
 
-class CustomCocoDataset(data.Dataset):
-    """ Custom Coco dataset that can represent a subset of the original dataset for training, test or evaluation. """
+class CustomDataset(data.Dataset):
+    """ Custom dataset that can represent a subset of the original dataset for training, test or evaluation. """
     
-    def __init__(self, output_rezized_image_folder_path : str, input_annotations_captions_train_path : str, vocabulary : cstm_load.Vocab, transform = None):
+    def __init__(self, data : list, transform = None):
         """ Initialize the dataset. """
 
-        print("\n\n==> Itializating CustomCocoDataset()")
+        print("\n\n==> Initializating CustomDataset()")
 
-        self.__output_rezized_image_folder_path = output_rezized_image_folder_path
-        self.__data = COCO(input_annotations_captions_train_path)
-        self.__indices = list(self.__data.anns.keys())
-        self.__vocabulary = vocabulary
+        self.__data = data
         self.__transform = transform
  
     def __getitem__(self, idx : int):
         """ Returns one data pair (image, caption) """
 
-        annotation_id = self.__indices[idx]
+        # Get the image id and the resized image caption
+        tokenizedCaption, imagePath = self.__data[idx]["tokenized_caption"], self.__data[idx]["image_path"]
 
         # Step 1 => Get the resized image and apply a transform to it 
 
-        # Get the image id
-        image_id = self.__data.anns[annotation_id]['image_id']
-
-        # Get the resized image caption
-        image_path = self.__data.loadImgs(image_id)[0]['file_name']
-
         # Get the resized image
-        image = Image.open(os.path.join(self.__output_rezized_image_folder_path, image_path)).convert('RGB')
+        image = Image.open(imagePath).convert('RGB')
 
         # Apply the given transformation to the image
         if self.__transform is not None:
             image = self.__transform(image)
 
-        # Step 2 => Get the caption and transform it to a list of integers 
-
-        # Get the image caption
-        caption = self.__data.anns[annotation_id]['caption']
-
-        # Convert caption (string) to word ids.
-        words = nltk.tokenize.word_tokenize(str(caption).lower())
-
-        caption_ids = []
-        caption_ids.append(self.__vocabulary('<start>'))
-        caption_ids.extend([self.__vocabulary(token) for token in words])
-        caption_ids.append(self.__vocabulary('<end>'))
+        # Step 2 => Get the caption and transform it to a list of integers (tokenize)
 
         # Transform to a Torch tensor
-        caption_ids_torch = torch.Tensor(caption_ids)       
+        caption = torch.Tensor(tokenizedCaption)       
 
-        return image, caption_ids_torch
+        return image, caption
  
     def __len__(self):
         """ Return the size of the dataset """
-        return len(self.__indices)
-        # return 100 # to set a max quantity of images to load (util for testing)
+        return 2 # len(self.__data)
  
 def collate_function(data_batch : int):
     """ Creates mini-batch tensors from the list of tuples (image, caption) """
@@ -105,7 +84,7 @@ def collate_function(data_batch : int):
 
     return images, tgts, cap_lens
 
-def get_loader(data_path : str, input_annotations_captions_train_path : str, vocabulary : cstm_load.Vocab, transform, batch_size : int, shuffle, num_workers):
+def get_loader(data : list, shuffle, num_workers):
 
     """
     Returns torch.utils.data.DataLoader for custom coco dataset.
@@ -115,15 +94,15 @@ def get_loader(data_path : str, input_annotations_captions_train_path : str, voc
       lengths: a list indicating valid length for each caption. length is (batch_size).
     """
 
-    # COCO caption dataset
-    coco_dataset = CustomCocoDataset(data_path, input_annotations_captions_train_path, vocabulary, transform)
+    # Load generic dataset
+    coco_dataset = CustomDataset(data, v.TRANSFORM)
     
     # Data loader for COCO dataset
-    custom_training_data_loader = torch.utils.data.DataLoader(dataset=coco_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_function)
+    custom_training_data_loader = torch.utils.data.DataLoader(dataset=coco_dataset, batch_size=v.BATCH_SIZE, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_function)
     
     return custom_training_data_loader
 
-def learn(custom_training_data_loader : CustomCocoDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, optimizer : torch.optim.Adam, epoch : int, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
+def learn(custom_training_data_loader : CustomDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, optimizer : torch.optim.Adam, epoch : int, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
     """ Learn 1 epoch of the model and save the loss in the plots. """
 
     print("\n\n==> learn()")
@@ -196,7 +175,7 @@ def learn(custom_training_data_loader : CustomCocoDataset, vocabulary : cstm_loa
     # We save the model
     fullModel.save(epoch)
 
-def eval(custom_testing_data_loader : CustomCocoDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, epoch, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
+def eval(custom_testing_data_loader : CustomDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, epoch, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
     """ Test 1 epoch of the model and save the accuracy in the plots. """
 
     with torch.no_grad():
@@ -264,12 +243,15 @@ def eval(custom_testing_data_loader : CustomCocoDataset, vocabulary : cstm_load.
 def train(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTestDataset=False):
     """ Train and test the model with many epochs """
 
-    # Build the data loader for the training set
-    custom_training_data_loader = get_loader(v.IMAGES_PATH[0]["output"], v.CAPTIONS_PATH[0], vocabulary, v.TRANSFORM, v.BATCH_SIZE, shuffle=True, num_workers=2) 
+    # Get the data
+    trainData, evalData = cstm_load.JsonDatasets.load()
+
+    # Build the data loader for the training sete
+    custom_training_data_loader = get_loader(trainData, shuffle=True, num_workers=2) 
 
     if withTestDataset:    
         # Build the data loader for the testing set
-        custom_testing_data_loader = get_loader(v.IMAGES_PATH[1]["output"], v.CAPTIONS_PATH[1], vocabulary, v.TRANSFORM, v.BATCH_SIZE, shuffle=True, num_workers=2) 
+        custom_testing_data_loader = get_loader(evalData, shuffle=True, num_workers=2) 
 
     # Train the models
     print("\n\n==> Train the models...")
@@ -309,11 +291,14 @@ def test(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTes
     # Train the models
     fullModel.evalMode()
 
+    # Get the data
+    trainData, evalData = cstm_load.JsonDatasets.load()
+
     if withTrainDataset:
         # Build the data loader for the training set
 
         print("\n\n==> Evaluating the train model...")
-        custom_training_data_loader = get_loader(v.IMAGES_PATH[0]["output"], v.CAPTIONS_PATH[0], vocabulary, v.TRANSFORM, v.BATCH_SIZE, shuffle=True, num_workers=2) 
+        custom_training_data_loader = get_loader(trainData, shuffle=True, num_workers=2) 
         eval(custom_training_data_loader, vocabulary, fullModel, 0)
         print()
 
@@ -321,6 +306,6 @@ def test(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTes
         # Build the data loader for the testing set
 
         print("\n\n==> Evaluating the test model...")
-        custom_testing_data_loader = get_loader(v.IMAGES_PATH[1]["output"], v.CAPTIONS_PATH[1], vocabulary, v.TRANSFORM, v.BATCH_SIZE, shuffle=True, num_workers=2) 
+        custom_testing_data_loader = get_loader(evalData, shuffle=True, num_workers=2) 
         eval(custom_testing_data_loader, vocabulary, fullModel, 0)
         print()

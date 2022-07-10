@@ -16,9 +16,9 @@ def init():
 # Actions to do
 TODO = [ 
     # "install" 
-    "train"
+    # "train"
     # "test"
-    # "predict"
+    "predict"
 ]
 
 # Network constants
@@ -35,6 +35,8 @@ CAPTIONS_PATH = [
     './data_dir/annotations/captions_train2014.json',
     './data_dir/annotations/captions_val2014.json'
 ]
+JSON_PATH = './data_dir/jsons/'
+JSON_FILE_NAME = 'datasets.json'
 OUTPUT_VOCABULARY_PATH = './data_dir/vocabulary.pkl'
 OUTPUT_MODELS_PATH = './models_dir/'
 OUTPUT_PLOTS_PATH = './output_dir/'
