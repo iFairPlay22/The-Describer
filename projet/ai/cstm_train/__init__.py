@@ -102,7 +102,7 @@ def get_loader(data : list, shuffle, num_workers):
     
     return custom_training_data_loader
 
-def learn(custom_training_data_loader : CustomDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, optimizer : torch.optim.Adam, epoch : int, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
+def learn(scaler, custom_training_data_loader : CustomDataset, vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, optimizer : torch.optim.Adam, epoch : int, costPlot : cstm_plot.SmartPlot = None , lossPlot : cstm_plot.SmartPlot = None, accuracyAveragePlot : cstm_plot.SmartPlot = None, detailedAccuracyPlots : cstm_plot.SmartPlot = None):
     """ Learn 1 epoch of the model and save the loss in the plots. """
 
     print("\n\n==> learn()")
@@ -121,16 +121,19 @@ def learn(custom_training_data_loader : CustomDataset, vocabulary : cstm_load.Vo
         # Reset the gradient
         optimizer.zero_grad()
 
-        # Make predictions
-        outputs = fullModel.forward(images, captions, lens)
+        with torch.cuda.amp.autocast():
 
-        # Compute the total error
-        loss    = fullModel.loss(outputs, tgts)
-        allLoss.append(loss.item())
+            # Make predictions
+            outputs = fullModel.forward(images, captions, lens)
+
+            # Compute the total error
+            loss    = fullModel.loss(outputs, tgts)
+            allLoss.append(loss.item())
         
         # Backward and step
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
         with torch.no_grad():
             # Make predictions
@@ -257,8 +260,9 @@ def train(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTe
     print("\n\n==> Train the models...")
     fullModel.trainMode()
 
-    # Use Adam optimizer
+    # Use Adam optimizer and grad scaler
     optimizer = torch.optim.Adam(fullModel.getAllParameters(), lr=v.STEP)
+    scaler = torch.cuda.amp.GradScaler()
 
     # Display the plot
     costPlot = cstm_plot.SmartPlot("Cost", "Epochs", "Cost (total loss)", v.OUTPUT_PLOTS_PATH)
@@ -275,7 +279,7 @@ def train(vocabulary : cstm_load.Vocab, fullModel : cstm_model.FullModel, withTe
         print("\n\n==> Epoch " + str(epoch) + "...", end="")
 
         # Learn
-        learn(custom_training_data_loader, vocabulary, fullModel, optimizer, epoch, costPlot, lossPlot, accuracyPlot, detailedAccuracyPlots)
+        learn(scaler, custom_training_data_loader, vocabulary, fullModel, optimizer, epoch, costPlot, lossPlot, accuracyPlot, detailedAccuracyPlots)
 
         if withTestDataset:
             # test

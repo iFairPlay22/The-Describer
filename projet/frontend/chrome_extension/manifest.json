@@ -10,13 +10,13 @@
   "version": "1.0.0",
   "description": "Chrome Extension that describes the images of the current webpage.",
   "icons": {
-    "16": "images/bb9e.png",
-    "48": "images/bb9e.png",
-    "128": "images/bb9e.png"
+    "16": "images/logo.png",
+    "48": "images/logo.png",
+    "128": "images/logo.png"
   },
   "action": {
     "default_icon": { 
-      "16": "images/bb9e.png"
+      "16": "images/logo.png"
     },
     "default_title": "A propos",
     "default_popup": "popup.html"
